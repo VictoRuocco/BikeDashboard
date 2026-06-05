@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -122,6 +122,7 @@
     color: var(--text);
     line-height: 1;
     font-variant-numeric: tabular-nums;
+    text-align: center;
   }
 
   #clock-seconds {
@@ -279,49 +280,57 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* FIX: Griglia flessibile adattata perfettamente a schermi lunghi (A55) */
   #controls {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 4px;
+    width: 100%;
+    padding: 0 2px;
+    margin-top: auto;
+    margin-bottom: auto;
   }
 
-	.ctrl-btn {
-	  background: none;
-	  border: none;
-	  /* MODIFICATO: Cambiato da var(--muted) a var(--text) per avere il bianco ad alto contrasto */
-	  color: var(--text); 
-	  cursor: pointer;
-	  padding: 12px; /* Aumentato il padding per rendere la zona di tocco più grande in bici */
-	  border-radius: 50%;
-	  display: flex;
-	  align-items: center;
-	  justify-content: center;
-	  transition: color 0.15s, background 0.15s;
-	  appearance: none;
-	  -webkit-appearance: none;
-	  font-size: 26px; /* Aumentata la dimensione dell'icona per vederla meglio */
-	}
+  .ctrl-btn {
+    background: none;
+    border: none;
+    color: var(--text); 
+    cursor: pointer;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
 
-	/* Effetto al tocco: i tasti si illuminano del verde Spotify per darti un feedback visivo */
-	.ctrl-btn:active { 
-	  background: var(--surface2); 
-	  color: var(--accent2); 
-	}
+  .ctrl-btn:active { 
+    background: var(--surface2); 
+    color: var(--accent2); 
+  }
 
   #play-btn {
-    width: 52px; height: 52px;
+    width: 56px; 
+    height: 56px;
     background: var(--accent);
-    color: #fff;
+    color: #000000;
     border-radius: 50%;
-    font-size: 20px;
+    font-size: 24px;
     border: none;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
     cursor: pointer;
     transition: transform 0.1s, background 0.2s;
     flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(29, 185, 84, 0.25);
   }
-  #play-btn:active { transform: scale(0.93); }
+  #play-btn:active { transform: scale(0.92); }
 
   #spotify-connect-btn {
     background: var(--accent);
@@ -342,6 +351,7 @@
     text-align: center;
     padding: 4px 0;
     letter-spacing: 0.04em;
+    margin-top: auto;
   }
 
   #media-status.connected { color: var(--green); }
@@ -507,27 +517,27 @@
         </div>
       </div>
 
-			<div id="controls">
-			  <!-- Pulsante Volume Giù -->
-			  <button class="ctrl-btn" id="btn-vol-down" aria-label="Abbassa Volume">
-			    <i class="ti ti-volume-minus" aria-hidden="true"></i>
-			  </button>
-			  
-			  <button class="ctrl-btn" id="btn-prev" aria-label="Precedente">
-			    <i class="ti ti-player-skip-back" aria-hidden="true"></i>
-			  </button>
-			  <button id="play-btn" aria-label="Play/Pausa">
-			    <i class="ti ti-player-play" id="play-icon" aria-hidden="true"></i>
-			  </button>
-			  <button class="ctrl-btn" id="btn-next" aria-label="Successivo">
-			    <i class="ti ti-player-skip-forward" aria-hidden="true"></i>
-			  </button>
+      <div id="controls">
+        <button class="ctrl-btn" id="btn-vol-down" aria-label="Abbassa Volume">
+          <i class="ti ti-volume-minus" aria-hidden="true"></i>
+        </button>
+        
+        <button class="ctrl-btn" id="btn-prev" aria-label="Precedente">
+          <i class="ti ti-player-skip-back" aria-hidden="true"></i>
+        </button>
+        
+        <button id="play-btn" aria-label="Play/Pausa">
+          <i class="ti ti-player-play" id="play-icon" aria-hidden="true"></i>
+        </button>
+        
+        <button class="ctrl-btn" id="btn-next" aria-label="Successivo">
+          <i class="ti ti-player-skip-forward" aria-hidden="true"></i>
+        </button>
 
-			  <!-- Pulsante Volume Su -->
-			  <button class="ctrl-btn" id="btn-vol-up" aria-label="Alza Volume">
-			    <i class="ti ti-volume-plus" aria-hidden="true"></i>
-			  </button>
-			</div>
+        <button class="ctrl-btn" id="btn-vol-up" aria-label="Alza Volume">
+          <i class="ti ti-volume-plus" aria-hidden="true"></i>
+        </button>
+      </div>
 
       <div id="media-status">In attesa di Spotify...</div>
     </div>
@@ -564,7 +574,6 @@
 const SPOTIFY_CLIENT_ID = '7ff19c5a7f6744b8b16c84883a384e3c';
 const SPOTIFY_REDIRECT_URI = window.location.origin + window.location.pathname;
 
-// Helper crittografici per PKCE Flow
 function generateRandomString(length) {
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const values = crypto.getRandomValues(new Uint8Array(length));
@@ -668,7 +677,6 @@ function fmtTime(ms) {
   return `${m}:${pad(s)}`;
 }
 
-// Avvia il Login Ufficiale PKCE autorizzato da Spotify
 async function loginToSpotify() {
   const codeVerifier = generateRandomString(64);
   const hashed = await sha256(codeVerifier);
@@ -692,7 +700,6 @@ async function loginToSpotify() {
   window.location.href = authUrl.toString();
 }
 
-// Scambia il codice temporaneo nell'URL con un vero Access Token funzionante
 async function exchangeCodeForToken(code) {
   const codeVerifier = localStorage.getItem('spotify_code_verifier');
 
@@ -819,17 +826,14 @@ document.getElementById('ls-prev').addEventListener('click', e => { e.stopPropag
 document.getElementById('ls-next').addEventListener('click', e => { e.stopPropagation(); document.getElementById('btn-next').click(); });
 connectBtn.addEventListener('click', loginToSpotify);
 
-// Controllo dei parametri nell'URL per catturare il codice d'accesso generato da Spotify
 async function initAuth() {
   const args = new URLSearchParams(window.location.search);
   const code = args.get('code');
 
   if (code) {
-    // Trovato il codice nell'URL, lo scambiamo con il Token definitivo
     statusEl.textContent = 'Autenticazione in corso...';
     const success = await exchangeCodeForToken(code);
     if (success) {
-      // Puliamo l'URL dai parametri per un aspetto pulito della PWA
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   } else {
