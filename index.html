@@ -286,23 +286,28 @@
     padding: 0 4px;
   }
 
-  .ctrl-btn {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.15s, background 0.15s;
-    appearance: none;
-    -webkit-appearance: none;
-    font-size: 22px;
-  }
-  .ctrl-btn:active { background: var(--surface2); color: var(--text); }
-  .ctrl-btn:hover { color: var(--text); }
+	.ctrl-btn {
+	  background: none;
+	  border: none;
+	  /* MODIFICATO: Cambiato da var(--muted) a var(--text) per avere il bianco ad alto contrasto */
+	  color: var(--text); 
+	  cursor: pointer;
+	  padding: 12px; /* Aumentato il padding per rendere la zona di tocco più grande in bici */
+	  border-radius: 50%;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  transition: color 0.15s, background 0.15s;
+	  appearance: none;
+	  -webkit-appearance: none;
+	  font-size: 26px; /* Aumentata la dimensione dell'icona per vederla meglio */
+	}
+
+	/* Effetto al tocco: i tasti si illuminano del verde Spotify per darti un feedback visivo */
+	.ctrl-btn:active { 
+	  background: var(--surface2); 
+	  color: var(--accent2); 
+	}
 
   #play-btn {
     width: 52px; height: 52px;
@@ -502,17 +507,27 @@
         </div>
       </div>
 
-      <div id="controls">
-        <button class="ctrl-btn" id="btn-prev" aria-label="Precedente">
-          <i class="ti ti-player-skip-back" aria-hidden="true"></i>
-        </button>
-        <button id="play-btn" aria-label="Play/Pausa">
-          <i class="ti ti-player-play" id="play-icon" aria-hidden="true"></i>
-        </button>
-        <button class="ctrl-btn" id="btn-next" aria-label="Successivo">
-          <i class="ti ti-player-skip-forward" aria-hidden="true"></i>
-        </button>
-      </div>
+			<div id="controls">
+			  <!-- Pulsante Volume Giù -->
+			  <button class="ctrl-btn" id="btn-vol-down" aria-label="Abbassa Volume">
+			    <i class="ti ti-volume-minus" aria-hidden="true"></i>
+			  </button>
+			  
+			  <button class="ctrl-btn" id="btn-prev" aria-label="Precedente">
+			    <i class="ti ti-player-skip-back" aria-hidden="true"></i>
+			  </button>
+			  <button id="play-btn" aria-label="Play/Pausa">
+			    <i class="ti ti-player-play" id="play-icon" aria-hidden="true"></i>
+			  </button>
+			  <button class="ctrl-btn" id="btn-next" aria-label="Successivo">
+			    <i class="ti ti-player-skip-forward" aria-hidden="true"></i>
+			  </button>
+
+			  <!-- Pulsante Volume Su -->
+			  <button class="ctrl-btn" id="btn-vol-up" aria-label="Alza Volume">
+			    <i class="ti ti-volume-plus" aria-hidden="true"></i>
+			  </button>
+			</div>
 
       <div id="media-status">In attesa di Spotify...</div>
     </div>
