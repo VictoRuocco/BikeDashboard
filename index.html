@@ -649,6 +649,7 @@ function getAccessTokenFromUrl() {
 
 function loginToSpotify() {
   const scopes = 'user-read-playback-state user-modify-playback-state';
+  // CORRETTO: rimosso l'errore di formattazione della stringa
   window.location.href = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&redirect_uri=${encodeURIComponent(SPOTIFY_REDIRECT_URI)}&scope=${encodeURIComponent(scopes)}&response_type=token&show_dialog=true`;
 }
 
