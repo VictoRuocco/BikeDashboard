@@ -2,879 +2,826 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0f">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a12">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BikeWidget">
 <link rel="manifest" href="manifest.json">
 <title>BikeWidget</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* ─────────────────────────────────────────────
+   RESET & VARIABILI
+───────────────────────────────────────────── */
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
 
-  :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c26;
-    --accent: #1DB954; 
-    --accent2: #1ed760;
-    --text: #f0f0f8;
-    --muted: #6b7280;
-    --border: rgba(255,255,255,0.08);
-    --green: #22c55e;
-    --amber: #f59e0b;
-  }
+:root {
+  --bg:       #0a0a12;
+  --surf:     #12121e;
+  --surf2:    #1e1e2e;
+  --surf3:    #252538;
+  --accent:   #4f8ef7;
+  --accent2:  #93c5fd;
+  --text:     #f0f0fa;
+  --text2:    #a0a8c0;
+  --muted:    #505870;
+  --border:   rgba(255,255,255,0.09);
+  --green:    #34d399;
+  --amber:    #fbbf24;
+  --red:      #f87171;
 
-  html, body {
-    width: 100%; height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-    overflow: hidden;
-    touch-action: none;
-  }
+  /* Galaxy A55 landscape: 2340×1080 fisici, density=3 → ~780×360 CSS dp */
+  /* Topbar: 32px → rimane 328px di altezza utile */
+  --topbar-h: 32px;
+  --content-h: calc(100vh - var(--topbar-h));
+}
 
-  #app {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
-  }
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+  overflow: hidden;
+  touch-action: none;
+}
 
-  #topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 16px;
-    background: var(--surface);
-    border-bottom: 0.5px solid var(--border);
-    flex-shrink: 0;
-  }
+/* ─────────────────────────────────────────────
+   APP ROOT
+───────────────────────────────────────────── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
 
-  #logo {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.15em;
-    color: var(--accent2);
-    text-transform: uppercase;
-  }
+/* ─────────────────────────────────────────────
+   TOP BAR
+───────────────────────────────────────────── */
+#topbar {
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  background: var(--surf);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
 
-  .toggle-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .toggle-label {
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.05em;
-  }
-  .toggle {
-    position: relative;
-    width: 44px;
-    height: 24px;
-    cursor: pointer;
-  }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .slider-t {
-    position: absolute;
-    inset: 0;
-    background: var(--surface2);
-    border-radius: 12px;
-    border: 0.5px solid var(--border);
-    transition: background 0.2s;
-  }
-  .slider-t::before {
-    content: '';
-    position: absolute;
-    width: 18px; height: 18px;
-    left: 3px; top: 3px;
-    background: var(--muted);
-    border-radius: 50%;
-    transition: transform 0.2s, background 0.2s;
-  }
-  .toggle input:checked + .slider-t { background: #11381e; }
-  .toggle input:checked + .slider-t::before { transform: translateX(20px); background: var(--accent); }
+#logo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  color: var(--accent2);
+  text-transform: uppercase;
+}
 
-  #main {
-    display: flex;
-    flex: 1;
-    gap: 0;
-    overflow: hidden;
-  }
+/* Toggle Normale / Blocco */
+.tog-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tog-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.tog {
+  position: relative;
+  width: 38px; height: 20px;
+  cursor: pointer;
+}
+.tog input { opacity: 0; width: 0; height: 0; }
+.tog-track {
+  position: absolute; inset: 0;
+  background: var(--surf3);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  transition: background .2s;
+}
+.tog-thumb {
+  position: absolute;
+  width: 14px; height: 14px;
+  left: 3px; top: 3px;
+  background: var(--muted);
+  border-radius: 50%;
+  transition: transform .2s, background .2s;
+}
+.tog input:checked ~ .tog-track { background: #1a3060; }
+.tog input:checked ~ .tog-thumb { transform: translateX(18px); background: var(--accent); }
 
-  #clock-panel {
-    width: 45%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface);
-    border-right: 0.5px solid var(--border);
-    padding: 20px 12px;
-    gap: 16px;
-  }
+/* ─────────────────────────────────────────────
+   MAIN — due colonne landscape
+───────────────────────────────────────────── */
+#main {
+  display: flex;
+  flex: 1;
+  height: var(--content-h);
+  overflow: hidden;
+}
 
-  #clock-time {
-    font-size: clamp(42px, 12vw, 72px);
-    font-weight: 200;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    text-align: center;
-  }
+/* ══════════════════════════════════════════
+   PANNELLO OROLOGIO  — sinistra 40%
+══════════════════════════════════════════ */
+#clock-panel {
+  width: 40%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--surf);
+  border-right: 1px solid var(--border);
+  padding: 10px 12px;
+  gap: 8px;
+}
 
-  #clock-seconds {
-    font-size: clamp(18px, 5vw, 28px);
-    font-weight: 300;
-    color: var(--accent);
-    font-variant-numeric: tabular-nums;
-  }
+/* HH:MM grande */
+#clock-hm {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  line-height: 1;
+}
+#clock-time {
+  font-size: clamp(60px, 15vw, 100px);
+  font-weight: 100;
+  letter-spacing: -.04em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+#clock-colon-sec {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 6px;
+  gap: 2px;
+}
+.colon-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+#clock-seconds {
+  font-size: clamp(22px, 5vw, 36px);
+  font-weight: 300;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
 
-  #clock-date {
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    text-align: center;
-  }
+/* Data */
+#clock-date {
+  font-size: clamp(10px, 1.6vw, 13px);
+  color: var(--text2);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
 
-  #ring-wrap {
-    position: relative;
-    width: 80px; height: 80px;
-  }
-  #ring-wrap svg { transform: rotate(-90deg); }
-  #ring-bg { stroke: var(--surface2); }
-  #ring-fill { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.9s linear; }
-  #ring-time {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    color: var(--accent2);
-    letter-spacing: 0.05em;
-  }
+/* Ring anello minuti */
+#ring-wrap {
+  position: relative;
+  width: clamp(56px, 10vw, 80px);
+  height: clamp(56px, 10vw, 80px);
+}
+#ring-wrap svg {
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+}
+#ring-bg   { stroke: var(--surf3); }
+#ring-fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dasharray: 213.6;
+  stroke-dashoffset: 213.6;
+  transition: stroke-dashoffset .9s linear;
+}
+#ring-label {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  color: var(--accent2);
+  letter-spacing: .03em;
+  font-variant-numeric: tabular-nums;
+}
 
-  #awake-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--surface2);
-    border: 0.5px solid var(--border);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 11px;
-    color: var(--muted);
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  #awake-btn.active {
-    border-color: var(--accent);
-    color: var(--accent2);
-  }
-  #awake-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--muted);
-    transition: background 0.2s;
-  }
-  #awake-btn.active #awake-dot { background: var(--green); }
+/* Pulsante Wake Lock */
+#awake-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surf3);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 5px 12px;
+  font-size: 10px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+#awake-btn.on { border-color: var(--green); color: var(--green); }
+#awake-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background .2s;
+  flex-shrink: 0;
+}
+#awake-btn.on #awake-dot { background: var(--green); }
 
-  #music-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg);
-    padding: 16px 14px;
-    gap: 14px;
-    overflow: hidden;
-  }
+/* ══════════════════════════════════════════
+   PANNELLO PLAYER  — destra 60%
+══════════════════════════════════════════ */
+#music-panel {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: row;          /* art | info */
+  align-items: center;
+  padding: 10px 16px;
+  gap: 16px;
+  background: var(--bg);
+  overflow: hidden;
+}
 
-  #now-playing-label {
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
+/* ── Album art ── */
+#art-wrap {
+  width: clamp(90px, 18vw, 140px);
+  height: clamp(90px, 18vw, 140px);
+  flex-shrink: 0;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
 
-  #track-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+/* ── Colonna info + controlli ── */
+#music-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  overflow: hidden;
+  min-width: 0;
+}
 
-  #track-title {
-    font-size: clamp(14px, 3.5vw, 18px);
-    font-weight: 500;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+#np-label {
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
 
-  #track-artist {
-    font-size: clamp(11px, 2.5vw, 14px);
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+#track-title {
+  font-size: clamp(14px, 2.8vw, 20px);
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  #art-wrap {
-    width: 100%;
-    aspect-ratio: 1;
-    max-height: 120px;
-    background: var(--surface2);
-    border-radius: 10px;
-    border: 0.5px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
+#track-artist {
+  font-size: clamp(11px, 1.9vw, 15px);
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  #art-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: none;
-  }
+/* Progress */
+#progress-wrap { display: flex; flex-direction: column; gap: 4px; }
+#progress-bar-bg {
+  width: 100%; height: 3px;
+  background: var(--surf3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+#progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 1s linear;
+}
+#progress-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 
-  #art-icon {
-    font-size: 36px;
-    opacity: 0.25;
-  }
+/* ── Controlli ── */
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
-  #progress-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+/* Pulsanti secondari (prev/next) */
+.ctrl-btn {
+  width: clamp(40px, 7vw, 52px);
+  height: clamp(40px, 7vw, 52px);
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s, border-color .15s;
+}
+.ctrl-btn:active { background: var(--surf3); border-color: var(--accent); }
 
-  #progress-bar-bg {
-    width: 100%;
-    height: 3px;
-    background: var(--surface2);
-    border-radius: 2px;
-    overflow: hidden;
-  }
+/* Play / Pausa */
+#play-btn {
+  width: clamp(50px, 9vw, 66px);
+  height: clamp(50px, 9vw, 66px);
+  background: var(--accent);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform .1s, background .2s;
+}
+#play-btn:active { transform: scale(.91); background: #2563eb; }
 
-  #progress-bar-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    width: 0%;
-  }
+/* ── Volume ── */
+#vol-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 3px;
+  background: var(--surf3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+#vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent2);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+}
 
-  #progress-times {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
+/* ── Status ── */
+#media-status {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: .04em;
+}
+#media-status.ok  { color: var(--green); }
+#media-status.err { color: var(--amber); }
 
-  /* FIX: Griglia flessibile adattata perfettamente a schermi lunghi (A55) */
-  #controls {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 0 2px;
-    margin-top: auto;
-    margin-bottom: auto;
-  }
+/* ═════════════════════════════════════════════════
+   LOCKSCREEN OVERLAY
+═════════════════════════════════════════════════ */
+#lockscreen {
+  display: none;
+  position: fixed; inset: 0;
+  background: #000;
+  z-index: 200;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 60px;
+  cursor: pointer;
+}
+#lockscreen.show { display: flex; }
 
-  .ctrl-btn {
-    background: none;
-    border: none;
-    color: var(--text); 
-    cursor: pointer;
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.15s, background 0.15s;
-    appearance: none;
-    -webkit-appearance: none;
-    font-size: 24px;
-    flex-shrink: 0;
-  }
+/* Clock lockscreen */
+#ls-clock { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#ls-time {
+  font-size: clamp(70px, 18vw, 120px);
+  font-weight: 100;
+  color: #fff;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+#ls-date {
+  font-size: 12px;
+  color: rgba(255,255,255,.4);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
 
-  .ctrl-btn:active { 
-    background: var(--surface2); 
-    color: var(--accent2); 
-  }
+/* Card musicale lockscreen */
+#ls-music {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  padding: 16px 20px;
+  width: clamp(200px, 32vw, 280px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#ls-np-label { font-size: 9px; letter-spacing: .12em; color: rgba(255,255,255,.3); text-transform: uppercase; }
+#ls-title  { font-size: 15px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ls-artist { font-size: 12px; color: rgba(255,255,255,.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  #play-btn {
-    width: 56px; 
-    height: 56px;
-    background: var(--accent);
-    color: #000000;
-    border-radius: 50%;
-    font-size: 24px;
-    border: none;
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
-    flex-shrink: 0;
-    box-shadow: 0 4px 10px rgba(29, 185, 84, 0.25);
-  }
-  #play-btn:active { transform: scale(0.92); }
+#ls-controls { display: flex; justify-content: center; align-items: center; gap: 20px; }
 
-  #spotify-connect-btn {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    display: none;
-    align-self: center;
-  }
+.ls-ctrl-btn {
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.ls-ctrl-btn:active { background: rgba(255,255,255,.2); }
 
-  #media-status {
-    font-size: 10px;
-    color: var(--muted);
-    text-align: center;
-    padding: 4px 0;
-    letter-spacing: 0.04em;
-    margin-top: auto;
-  }
+#ls-play-btn {
+  width: 48px; height: 48px;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+#ls-play-btn:active { background: rgba(255,255,255,.3); }
 
-  #media-status.connected { color: var(--green); }
-  #media-status.error { color: var(--amber); }
-
-  #lockscreen {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: #000;
-    z-index: 100;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 32px;
-    cursor: pointer;
-  }
-  #lockscreen.visible { display: flex; }
-
-  #ls-time {
-    font-size: clamp(56px, 18vw, 96px);
-    font-weight: 100;
-    color: #fff;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
-  }
-
-  #ls-date {
-    font-size: 14px;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  #ls-music {
-    background: rgba(255,255,255,0.08);
-    border: 0.5px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    padding: 16px 24px;
-    width: 280px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  #ls-track-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  #ls-track-artist {
-    font-size: 13px;
-    color: rgba(255,255,255,0.55);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  #ls-controls {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-    align-items: center;
-  }
-
-  .ls-btn {
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.7);
-    font-size: 24px;
-    cursor: pointer;
-    padding: 4px;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  #ls-play-btn {
-    width: 48px; height: 48px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 50%;
-    border: none;
-    color: #fff;
-    font-size: 18px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-  }
-
-  #ls-hint {
-    font-size: 11px;
-    color: rgba(255,255,255,0.25);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-top: 8px;
-  }
-
-  @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css');
+#ls-hint { font-size: 10px; color: rgba(255,255,255,.2); letter-spacing: .08em; text-transform: uppercase; text-align: center; }
 </style>
 </head>
 <body>
-
 <div id="app">
+
+  <!-- ── TOP BAR ── -->
   <div id="topbar">
     <span id="logo">🚴 BikeWidget</span>
-    <div class="toggle-wrap">
-      <span class="toggle-label" id="mode-label">NORMALE</span>
-      <label class="toggle">
+    <div class="tog-wrap">
+      <span class="tog-label">Normale</span>
+      <label class="tog" aria-label="Modalità lockscreen">
         <input type="checkbox" id="lockmode-toggle">
-        <span class="slider-t"></span>
+        <span class="tog-track"></span>
+        <span class="tog-thumb"></span>
       </label>
-      <span class="toggle-label">BLOCCO</span>
+      <span class="tog-label">Blocco</span>
     </div>
   </div>
 
+  <!-- ── MAIN ── -->
   <div id="main">
+
+    <!-- ════ OROLOGIO ════ -->
     <div id="clock-panel">
-      <div>
+
+      <div id="clock-hm">
         <div id="clock-time">00:00</div>
-        <div style="display:flex;align-items:baseline;gap:6px;justify-content:center;margin-top:4px;">
-          <span style="font-size:13px;color:var(--muted)">:</span>
-          <span id="clock-seconds" style="font-size:clamp(24px,7vw,40px)">00</span>
+        <div id="clock-colon-sec">
+          <span class="colon-dot"></span>
+          <span id="clock-seconds">00</span>
+          <span class="colon-dot"></span>
         </div>
       </div>
+
       <div id="clock-date">—</div>
 
-      <div id="ring-wrap">
-        <svg width="80" height="80" viewBox="0 0 80 80">
-          <circle id="ring-bg" cx="40" cy="40" r="34" fill="none" stroke-width="5"/>
-          <circle id="ring-fill" cx="40" cy="40" r="34" fill="none" stroke-width="5"
-            stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+      <!-- Anello minuti -->
+      <div id="ring-wrap" aria-label="Avanzamento minuto">
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+          <circle id="ring-bg"   cx="40" cy="40" r="34" fill="none" stroke-width="5"/>
+          <circle id="ring-fill" cx="40" cy="40" r="34" fill="none" stroke-width="5"/>
         </svg>
-        <div id="ring-time">00:00</div>
+        <div id="ring-label">MIN</div>
       </div>
 
-      <button id="awake-btn">
+      <!-- Wake lock -->
+      <button id="awake-btn" type="button">
         <span id="awake-dot"></span>
         <span id="awake-text">Schermo attivo</span>
       </button>
-    </div>
 
+    </div><!-- /clock-panel -->
+
+    <!-- ════ PLAYER ════ -->
     <div id="music-panel">
-      <div id="now-playing-label">In riproduzione (Spotify)</div>
 
-      <div id="art-wrap">
-        <span id="art-icon">♪</span>
-        <img id="art-image" alt="Album Art">
+      <!-- Art -->
+      <div id="art-wrap" aria-label="Copertina album">
+        <!-- Nota musicale SVG inline, sempre visibile -->
+        <svg id="art-icon" width="54" height="54" viewBox="0 0 24 24" fill="none"
+             xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9 18V5l12-2v13" stroke="#4f8ef7" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="6" cy="18" r="3" stroke="#4f8ef7" stroke-width="1.5"/>
+          <circle cx="18" cy="16" r="3" stroke="#4f8ef7" stroke-width="1.5"/>
+        </svg>
       </div>
 
-      <div id="track-info">
+      <!-- Info + controlli -->
+      <div id="music-info">
+
+        <div id="np-label">In riproduzione</div>
         <div id="track-title">Nessuna traccia</div>
         <div id="track-artist">—</div>
-      </div>
 
-      <button id="spotify-connect-btn">Connetti a Spotify</button>
-
-      <div id="progress-wrap">
-        <div id="progress-bar-bg"><div id="progress-bar-fill"></div></div>
-        <div id="progress-times">
-          <span id="time-current">0:00</span>
-          <span id="time-total">0:00</span>
+        <!-- Progress -->
+        <div id="progress-wrap">
+          <div id="progress-bar-bg">
+            <div id="progress-bar-fill"></div>
+          </div>
+          <div id="progress-times">
+            <span id="time-current">0:00</span>
+            <span id="time-total">0:00</span>
+          </div>
         </div>
-      </div>
 
-      <div id="controls">
-        <button class="ctrl-btn" id="btn-vol-down" aria-label="Abbassa Volume">
-          <i class="ti ti-volume-minus" aria-hidden="true"></i>
-        </button>
-        
-        <button class="ctrl-btn" id="btn-prev" aria-label="Precedente">
-          <i class="ti ti-player-skip-back" aria-hidden="true"></i>
-        </button>
-        
-        <button id="play-btn" aria-label="Play/Pausa">
-          <i class="ti ti-player-play" id="play-icon" aria-hidden="true"></i>
-        </button>
-        
-        <button class="ctrl-btn" id="btn-next" aria-label="Successivo">
-          <i class="ti ti-player-skip-forward" aria-hidden="true"></i>
-        </button>
+        <!-- Controlli con icone SVG inline -->
+        <div id="controls">
 
-        <button class="ctrl-btn" id="btn-vol-up" aria-label="Alza Volume">
-          <i class="ti ti-volume-plus" aria-hidden="true"></i>
-        </button>
-      </div>
+          <!-- Precedente -->
+          <button class="ctrl-btn" id="btn-prev" type="button" aria-label="Brano precedente">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M19 20L9 12l10-8v16Z" fill="#f0f0fa"/>
+              <rect x="5" y="4" width="2.5" height="16" rx="1.25" fill="#f0f0fa"/>
+            </svg>
+          </button>
 
-      <div id="media-status">In attesa di Spotify...</div>
-    </div>
-  </div>
-</div>
+          <!-- Play / Pausa -->
+          <button id="play-btn" type="button" aria-label="Play/Pausa">
+            <svg id="play-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 4l14 8-14 8V4Z" fill="#ffffff"/>
+            </svg>
+          </button>
 
+          <!-- Successivo -->
+          <button class="ctrl-btn" id="btn-next" type="button" aria-label="Brano successivo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 4l10 8-10 8V4Z" fill="#f0f0fa"/>
+              <rect x="16.5" y="4" width="2.5" height="16" rx="1.25" fill="#f0f0fa"/>
+            </svg>
+          </button>
+
+        </div><!-- /controls -->
+
+        <!-- Volume -->
+        <div id="vol-wrap">
+          <!-- Icona volume SVG inline -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="flex-shrink:0">
+            <path d="M11 5L6 9H2v6h4l5 4V5Z" fill="#505870"/>
+            <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12" stroke="#505870" stroke-width="1.5"
+                  stroke-linecap="round"/>
+          </svg>
+          <input type="range" id="vol-slider" min="0" max="100" value="80" aria-label="Volume">
+        </div>
+
+        <div id="media-status">Nessun media</div>
+
+      </div><!-- /music-info -->
+
+    </div><!-- /music-panel -->
+
+  </div><!-- /main -->
+
+</div><!-- /app -->
+
+<!-- ════ LOCKSCREEN ════ -->
 <div id="lockscreen" role="button" aria-label="Tocca per sbloccare">
-  <div id="ls-time">00:00</div>
-  <div id="ls-date">—</div>
+
+  <div id="ls-clock">
+    <div id="ls-time">00:00</div>
+    <div id="ls-date">—</div>
+  </div>
 
   <div id="ls-music">
-    <div style="font-size:10px;letter-spacing:0.1em;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:2px">In riproduzione</div>
-    <div id="ls-track-title">Nessuna traccia</div>
-    <div id="ls-track-artist">—</div>
+    <div id="ls-np-label">In riproduzione</div>
+    <div id="ls-title">Nessuna traccia</div>
+    <div id="ls-artist">—</div>
+
     <div id="ls-controls">
-      <button class="ls-btn" id="ls-prev" aria-label="Precedente">
-        <i class="ti ti-player-skip-back" aria-hidden="true"></i>
+
+      <!-- Prev lockscreen -->
+      <button class="ls-ctrl-btn" id="ls-prev" type="button" aria-label="Precedente">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 20L9 12l10-8v16Z" fill="rgba(255,255,255,.8)"/>
+          <rect x="5" y="4" width="2.5" height="16" rx="1.25" fill="rgba(255,255,255,.8)"/>
+        </svg>
       </button>
-      <button id="ls-play-btn" aria-label="Play/Pausa">
-        <i class="ti ti-player-play" id="ls-play-icon" aria-hidden="true"></i>
+
+      <!-- Play lockscreen -->
+      <button id="ls-play-btn" type="button" aria-label="Play/Pausa">
+        <svg id="ls-play-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 4l14 8-14 8V4Z" fill="#ffffff"/>
+        </svg>
       </button>
-      <button class="ls-btn" id="ls-next" aria-label="Successivo">
-        <i class="ti ti-player-skip-forward" aria-hidden="true"></i>
+
+      <!-- Next lockscreen -->
+      <button class="ls-ctrl-btn" id="ls-next" type="button" aria-label="Successivo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 4l10 8-10 8V4Z" fill="rgba(255,255,255,.8)"/>
+          <rect x="16.5" y="4" width="2.5" height="16" rx="1.25" fill="rgba(255,255,255,.8)"/>
+        </svg>
       </button>
+
     </div>
+
+    <div id="ls-hint">Tocca per tornare all'app</div>
   </div>
-  <div id="ls-hint">Tocca per tornare all'app</div>
-</div>
+
+</div><!-- /lockscreen -->
 
 <script>
-// ==========================================
-// CONFIGURAZIONE SPOTIFY PKCE
-// ==========================================
-const SPOTIFY_CLIENT_ID = '7ff19c5a7f6744b8b16c84883a384e3c';
-const SPOTIFY_REDIRECT_URI = window.location.origin + window.location.pathname;
-
-function generateRandomString(length) {
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const values = crypto.getRandomValues(new Uint8Array(length));
-  return Array.from(values, x => possible[x % possible.length]).join('');
-}
-
-async function sha256(plain) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(plain);
-  return crypto.subtle.digest('SHA-256', data);
-}
-
-function base64urlencode(a) {
-  return btoa(String.fromCharCode.apply(null, new Uint8Array(a)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-// =====================
-// CLOCK
-// =====================
-const DAYS = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+/* ─────────────────────────────────────────────
+   CLOCK
+───────────────────────────────────────────── */
+const DAYS   = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
 const MONTHS = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-const pad = n => String(n).padStart(2,'0');
+const pad = n => String(n).padStart(2, '0');
 
 function updateClock() {
   const now = new Date();
-  const h = pad(now.getHours()), m = pad(now.getMinutes()), s = pad(now.getSeconds());
+  const h = pad(now.getHours());
+  const m = pad(now.getMinutes());
+  const s = pad(now.getSeconds());
 
-  document.getElementById('clock-time').textContent = `${h}:${m}`;
+  document.getElementById('clock-time').textContent    = `${h}:${m}`;
   document.getElementById('clock-seconds').textContent = s;
-  document.getElementById('ls-time').textContent = `${h}:${m}`;
+  document.getElementById('ls-time').textContent       = `${h}:${m}`;
 
-  const dateStr = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
-  document.getElementById('clock-date').textContent = dateStr;
-  document.getElementById('ls-date').textContent = dateStr;
-  document.getElementById('ring-time').textContent = `${h}:${m}`;
+  const ds = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+  document.getElementById('clock-date').textContent = ds;
+  document.getElementById('ls-date').textContent    = ds;
 
-  const secInMin = now.getSeconds();
-  const circumference = 213.6;
-  const offset = circumference - (secInMin / 60) * circumference;
+  // Ring: secondi nel minuto corrente
+  const circ   = 213.6;
+  const offset = circ - (now.getSeconds() / 60) * circ;
   document.getElementById('ring-fill').style.strokeDashoffset = offset;
 }
+
 setInterval(updateClock, 1000);
 updateClock();
 
-// =====================
-// WAKE LOCK
-// =====================
+/* ─────────────────────────────────────────────
+   WAKE LOCK
+───────────────────────────────────────────── */
 let wakeLock = null;
-const awakeBtn = document.getElementById('awake-btn');
+const awakeBtn  = document.getElementById('awake-btn');
 const awakeText = document.getElementById('awake-text');
 
-async function requestWakeLock() {
-  if ('wakeLock' in navigator) {
-    try {
-      wakeLock = await navigator.wakeLock.request('screen');
-      awakeBtn.classList.add('active');
-      awakeText.textContent = 'Schermo bloccato ON';
-      wakeLock.addEventListener('release', () => {
-        awakeBtn.classList.remove('active');
-        awakeText.textContent = 'Schermo attivo';
-        wakeLock = null;
-      });
-    } catch(e) { awakeText.textContent = 'Non supportato'; }
-  } else { awakeText.textContent = 'Non supportato'; }
+async function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) {
+    awakeText.textContent = 'Non disponibile';
+    return;
+  }
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    awakeBtn.classList.add('on');
+    awakeText.textContent = 'Schermo ON';
+    wakeLock.addEventListener('release', () => {
+      wakeLock = null;
+      awakeBtn.classList.remove('on');
+      awakeText.textContent = 'Schermo attivo';
+    });
+  } catch (e) {
+    awakeText.textContent = 'Errore';
+  }
 }
 
 async function releaseWakeLock() {
-  if (wakeLock) { await wakeLock.release(); }
-  awakeBtn.classList.remove('active'); awakeText.textContent = 'Schermo attivo';
+  if (wakeLock) await wakeLock.release();
 }
-awakeBtn.addEventListener('click', () => { if (wakeLock) releaseWakeLock(); else requestWakeLock(); });
 
-// =====================
-// LOGICA PLAYER E API SPOTIFY
-// =====================
-let accessToken = null;
+awakeBtn.addEventListener('click', () => {
+  wakeLock ? releaseWakeLock() : acquireWakeLock();
+});
+
+// Riacquisisce se la pagina torna in foreground e era attivo
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && awakeBtn.classList.contains('on') && !wakeLock) {
+    acquireWakeLock();
+  }
+});
+
+/* ─────────────────────────────────────────────
+   MEDIA SESSION
+───────────────────────────────────────────── */
 let isPlaying = false;
-let progressMs = 0;
-let durationMs = 0;
-let progressInterval = null;
 
-const trackTitle = document.getElementById('track-title');
-const trackArtist = document.getElementById('track-artist');
-const lsTitle = document.getElementById('ls-track-title');
-const lsArtist = document.getElementById('ls-track-artist');
-const artIcon = document.getElementById('art-icon');
-const artImage = document.getElementById('art-image');
-const playIcon = document.getElementById('play-icon');
-const lsPlayIcon = document.getElementById('ls-play-icon');
-const progressFill = document.getElementById('progress-bar-fill');
-const timeCurrent = document.getElementById('time-current');
-const timeTotal = document.getElementById('time-total');
-const statusEl = document.getElementById('media-status');
-const connectBtn = document.getElementById('spotify-connect-btn');
+const playIconEl   = document.getElementById('play-icon');
+const lsPlayIconEl = document.getElementById('ls-play-icon');
+const statusEl     = document.getElementById('media-status');
 
-function fmtTime(ms) {
-  if (!ms || isNaN(ms)) return '0:00';
-  const sec = Math.floor(ms / 1000);
-  const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
-  return `${m}:${pad(s)}`;
+// SVG paths
+const SVG_PLAY  = '<path d="M6 4l14 8-14 8V4Z" fill="#ffffff"/>';
+const SVG_PAUSE = '<rect x="5" y="4" width="4" height="16" rx="1.5" fill="#ffffff"/><rect x="15" y="4" width="4" height="16" rx="1.5" fill="#ffffff"/>';
+const SVG_PLAY_LS  = '<path d="M6 4l14 8-14 8V4Z" fill="#ffffff"/>';
+const SVG_PAUSE_LS = '<rect x="5" y="4" width="4" height="16" rx="1.5" fill="#ffffff"/><rect x="15" y="4" width="4" height="16" rx="1.5" fill="#ffffff"/>';
+
+function setPlayState(playing) {
+  isPlaying = playing;
+  playIconEl.innerHTML   = playing ? SVG_PAUSE    : SVG_PLAY;
+  lsPlayIconEl.innerHTML = playing ? SVG_PAUSE_LS : SVG_PLAY_LS;
 }
 
-async function loginToSpotify() {
-  const codeVerifier = generateRandomString(64);
-  const hashed = await sha256(codeVerifier);
-  const codeChallenge = base64urlencode(hashed);
-
-  localStorage.setItem('spotify_code_verifier', codeVerifier);
-
-  const scopes = 'user-read-playback-state user-modify-playback-state';
-  const authUrl = new URL("https://accounts.spotify.com/authorize");
-
-  const params = {
-    response_type: 'code',
-    client_id: SPOTIFY_CLIENT_ID,
-    scope: scopes,
-    redirect_uri: SPOTIFY_REDIRECT_URI,
-    code_challenge_method: 'S256',
-    code_challenge: codeChallenge,
-  };
-
-  authUrl.search = new URLSearchParams(params).toString();
-  window.location.href = authUrl.toString();
-}
-
-async function exchangeCodeForToken(code) {
-  const codeVerifier = localStorage.getItem('spotify_code_verifier');
-
-  const payload = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: SPOTIFY_CLIENT_ID,
-      grant_type: 'authorization_code',
-      code: code,
-      redirect_uri: SPOTIFY_REDIRECT_URI,
-      code_verifier: codeVerifier
-    }),
-  };
-
-  try {
-    const res = await fetch('https://accounts.spotify.com/api/token', payload);
-    const data = await res.json();
-    if (data.access_token) {
-      accessToken = data.access_token;
-      localStorage.setItem('spotify_token', accessToken);
-      if (data.refresh_token) localStorage.setItem('spotify_refresh_token', data.refresh_token);
-      return true;
-    }
-  } catch (e) { console.error(e); }
-  return false;
-}
-
-async function spotifyFetch(endpoint, method = 'GET') {
-  try {
-    const res = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
-      method: method,
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    if (res.status === 401) {
-      statusEl.textContent = 'Sincronizzazione scaduta. Riconnetti.';
-      statusEl.className = 'error';
-      connectBtn.style.display = 'block';
-      return null;
-    }
-    if (res.status === 204) return true;
-    return await res.json();
-  } catch (e) { return null; }
-}
-
-function startLocalProgress() {
-  clearInterval(progressInterval);
-  if (!isPlaying) return;
-  progressInterval = setInterval(() => {
-    if (progressMs < durationMs) {
-      progressMs += 1000;
-      updateProgressUi();
-    }
-  }, 1000);
-}
-
-function updateProgressUi() {
-  timeCurrent.textContent = fmtTime(progressMs);
-  const percent = durationMs > 0 ? (progressMs / durationMs) * 100 : 0;
-  progressFill.style.width = `${percent}%`;
-}
-
-async function getCurrentlyPlaying() {
-  if (!accessToken) return;
-  const data = await spotifyFetch('me/player');
-  
-  if (data && data.item) {
-    connectBtn.style.display = 'none';
-    statusEl.textContent = 'Spotify Connesso';
-    statusEl.className = 'connected';
-
-    trackTitle.textContent = data.item.name;
-    lsTitle.textContent = data.item.name;
-    const artists = data.item.artists.map(a => a.name).join(', ');
-    trackArtist.textContent = artists;
-    lsArtist.textContent = artists;
-
-    durationMs = data.item.duration_ms;
-    progressMs = data.progress_ms;
-    timeTotal.textContent = fmtTime(durationMs);
-    updateProgressUi();
-
-    isPlaying = data.is_playing;
-    const iconClass = isPlaying ? 'ti-player-pause' : 'ti-player-play';
-    playIcon.className = `ti ${iconClass}`;
-    lsPlayIcon.className = `ti ${iconClass}`;
-
-    if (data.item.album.images && data.item.album.images.length > 0) {
-      artImage.src = data.item.album.images[0].url;
-      artImage.style.display = 'block';
-      artIcon.style.display = 'none';
-    }
-    startLocalProgress();
-  } else {
-    statusEl.textContent = 'Nessun brano attivo. Avvia Spotify sul telefono.';
-    statusEl.className = '';
-  }
-}
-
-document.getElementById('play-btn').addEventListener('click', async () => {
-  if (!accessToken) return;
-  const endpoint = isPlaying ? 'me/player/pause' : 'me/player/play';
-  await spotifyFetch(endpoint, 'PUT');
-  isPlaying = !isPlaying;
-  const iconClass = isPlaying ? 'ti-player-pause' : 'ti-player-play';
-  playIcon.className = `ti ${iconClass}`;
-  lsPlayIcon.className = `ti ${iconClass}`;
-  startLocalProgress();
-  setTimeout(getCurrentlyPlaying, 400);
-});
-
-document.getElementById('btn-prev').addEventListener('click', async () => {
-  await spotifyFetch('me/player/previous', 'POST');
-  setTimeout(getCurrentlyPlaying, 400);
-});
-
-document.getElementById('btn-next').addEventListener('click', async () => {
-  await spotifyFetch('me/player/next', 'POST');
-  setTimeout(getCurrentlyPlaying, 400);
-});
-
-document.getElementById('ls-play-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('play-btn').click(); });
-document.getElementById('ls-prev').addEventListener('click', e => { e.stopPropagation(); document.getElementById('btn-prev').click(); });
-document.getElementById('ls-next').addEventListener('click', e => { e.stopPropagation(); document.getElementById('btn-next').click(); });
-connectBtn.addEventListener('click', loginToSpotify);
-
-async function initAuth() {
-  const args = new URLSearchParams(window.location.search);
-  const code = args.get('code');
-
-  if (code) {
-    statusEl.textContent = 'Autenticazione in corso...';
-    const success = await exchangeCodeForToken(code);
-    if (success) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  } else {
-    accessToken = localStorage.getItem('spotify_token');
+function updateMediaInfo() {
+  if (!('mediaSession' in navigator)) {
+    statusEl.textContent = 'Media Session non supportata';
+    return;
   }
 
-  if (!accessToken) {
-    connectBtn.style.display = 'block';
-    statusEl.textContent = 'Connessione a Spotify richiesta.';
+  const meta = navigator.mediaSession.metadata;
+  if (meta) {
+    document.getElementById('track-title').textContent  = meta.title  || 'Sconosciuto';
+    document.getElementById('track-artist').textContent = meta.artist || meta.album || '—';
+    document.getElementById('ls-title').textContent     = meta.title  || 'Sconosciuto';
+    document.getElementById('ls-artist').textContent    = meta.artist || meta.album || '—';
+    statusEl.textContent  = '● Media attivo';
+    statusEl.className    = 'ok';
   } else {
-    setInterval(getCurrentlyPlaying, 3000);
-    getCurrentlyPlaying();
+    document.getElementById('track-title').textContent  = 'Nessuna traccia';
+    document.getElementById('track-artist').textContent = '—';
+    document.getElementById('ls-title').textContent     = 'Nessuna traccia';
+    document.getElementById('ls-artist').textContent    = '—';
+    statusEl.textContent = 'Nessun media';
+    statusEl.className   = '';
   }
+
+  const ps = navigator.mediaSession.playbackState;
+  if      (ps === 'playing') setPlayState(true);
+  else if (ps === 'paused')  setPlayState(false);
 }
 
-initAuth();
+setInterval(updateMediaInfo, 2000);
+updateMediaInfo();
 
-// =====================
-// LOCKSCREEN MODE
-// =====================
+function doAction(action) {
+  try { navigator.mediaSession?.callActionHandler?.(action); } catch(_) {}
+}
+
+document.getElementById('play-btn').addEventListener('click', () => {
+  if (isPlaying) doAction('pause'); else doAction('play');
+  setPlayState(!isPlaying);
+});
+
+document.getElementById('btn-prev').addEventListener('click', () => doAction('previoustrack'));
+document.getElementById('btn-next').addEventListener('click', () => doAction('nexttrack'));
+
+// Lockscreen controls
+document.getElementById('ls-play-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('play-btn').click();
+});
+document.getElementById('ls-prev').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('btn-prev').click();
+});
+document.getElementById('ls-next').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('btn-next').click();
+});
+
+// Volume (agisce sugli elementi <audio>/<video> della pagina)
+document.getElementById('vol-slider').addEventListener('input', e => {
+  const v = e.target.value / 100;
+  document.querySelectorAll('audio, video').forEach(el => el.volume = v);
+});
+
+/* ─────────────────────────────────────────────
+   LOCKSCREEN TOGGLE
+───────────────────────────────────────────── */
 const lockscreen = document.getElementById('lockscreen');
-const lockmodeToggle = document.getElementById('lockmode-toggle');
 
-lockmodeToggle.addEventListener('change', () => {
-  if (lockmodeToggle.checked) {
-    lockscreen.classList.add('visible');
-    document.getElementById('mode-label').textContent = 'NORMALE';
-  } else {
-    lockscreen.classList.remove('visible');
-    document.getElementById('mode-label').textContent = 'BLOCCO';
-  }
+document.getElementById('lockmode-toggle').addEventListener('change', e => {
+  lockscreen.classList.toggle('show', e.target.checked);
 });
 
 lockscreen.addEventListener('click', () => {
-  lockscreen.classList.remove('visible');
-  lockmodeToggle.checked = false;
-  document.getElementById('mode-label').textContent = 'NORMALE';
+  lockscreen.classList.remove('show');
+  document.getElementById('lockmode-toggle').checked = false;
 });
 
 lockscreen.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
+/* ─────────────────────────────────────────────
+   SERVICE WORKER (offline support)
+───────────────────────────────────────────── */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
