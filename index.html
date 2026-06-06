@@ -306,17 +306,22 @@ html,body { width:100%; height:100%; background:var(--bg); color:var(--text);
     <p class="setup-step">
       <b>1.</b> Vai su <a href="https://developer.spotify.com/dashboard" target="_blank">developer.spotify.com/dashboard</a><br>
       <b>2.</b> Crea un'app → copia il <b>Client ID</b><br>
-      <b>3.</b> In "Edit Settings" aggiungi come Redirect URI:<br>
-      <code id="redirect-uri-display" style="font-size:10px;color:var(--accent2);word-break:break-all;"></code><br>
-      <b>4.</b> Salva e incolla il Client ID qui sotto
+      <b>3.</b> In "Edit Settings" → Redirect URIs, aggiungi <b>esattamente</b> l'URI qui sotto e clicca <b>Add</b>, poi <b>Save</b>
     </p>
+
+    <!-- Redirect URI display + copia -->
+    <div style="background:var(--surf3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+      <code id="redirect-uri-display" style="font-size:11px;color:var(--accent2);word-break:break-all;flex:1;line-height:1.5;"></code>
+      <button id="btn-copy-uri" type="button" style="flex-shrink:0;background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:10px;color:var(--text2);cursor:pointer;white-space:nowrap;">Copia</button>
+    </div>
+    <span class="setup-hint" style="margin-top:-8px;">⚠️ Deve corrispondere <i>esattamente</i> a quello nel Dashboard Spotify</span>
 
     <div class="setup-divider"></div>
 
     <div class="setup-field">
       <span class="setup-label">Client ID</span>
       <input class="setup-input" id="client-id-input" type="text"
-             placeholder="es. 4b3c1a2d..." autocomplete="off" spellcheck="false">
+             placeholder="es. 4b3c1a2d9e6f..." autocomplete="off" spellcheck="false">
       <span class="setup-hint">Trovalo nel tuo Spotify Developer Dashboard</span>
     </div>
 
@@ -421,8 +426,30 @@ let currentDuration = 0;
 let currentlyPlaying = false;
 
 // Redirect URI = pagina corrente (senza hash)
-const REDIRECT_URI = location.origin + location.pathname.replace(/\/[^/]*$/, '/') + 'index.html';
-document.getElementById('redirect-uri-display').textContent = REDIRECT_URI;
+// Redirect URI = URL esatto della pagina corrente (senza query/hash)
+// Deve corrispondere ESATTAMENTE a quello nel Spotify Dashboard
+const REDIRECT_URI = location.origin + location.pathname;
+const uriDisplay = document.getElementById('redirect-uri-display');
+if (uriDisplay) uriDisplay.textContent = REDIRECT_URI;
+
+// Pulsante copia URI
+const btnCopyUri = document.getElementById('btn-copy-uri');
+if (btnCopyUri) btnCopyUri.addEventListener('click', () => {
+  const copy = () => {
+    btnCopyUri.textContent = '✓ Copiato!';
+    btnCopyUri.style.color = 'var(--green)';
+    setTimeout(() => { btnCopyUri.textContent = 'Copia'; btnCopyUri.style.color = ''; }, 2000);
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(REDIRECT_URI).then(copy).catch(() => fallbackCopy());
+  } else { fallbackCopy(); }
+  function fallbackCopy() {
+    const ta = document.createElement('textarea');
+    ta.value = REDIRECT_URI; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); copy();
+  }
+});
 
 // Legge client id salvato
 function getSavedClientId() { try { return localStorage.getItem('bw_client_id') || ''; } catch(e){ return ''; } }
