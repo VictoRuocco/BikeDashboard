@@ -182,7 +182,7 @@ html,body {
 #spotify-dot { width:6px; height:6px; border-radius:50%; background:var(--muted); }
 #spotify-badge.linked #spotify-dot { background:var(--spotify); }
 
-/* ── PANNELLO DELLE PLAYLIST ── */
+/* ── PANNELLO DELLE PLAYLIST (Novità) ── */
 #playlist-overlay {
   display:none; position:fixed; inset:0; z-index:250; background:rgba(0,0,0,.8); backdrop-filter:blur(8px); align-items:center; justify-content:center;
 }
@@ -235,7 +235,7 @@ html,body {
 #ls-clock { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2vh; }
 #ls-samsung-time-wrap {
   display:flex; align-items:center; justify-content:center; font-family:'Oswald', sans-serif;
-  font-size:calc(50px + 5vw); line-height:0.85; letter-spacing:-0.02em; font-variant-numeric: tabular-nums;
+  font-size:calc(66px + 7.5vw); line-height:0.85; letter-spacing:-0.02em; font-variant-numeric: tabular-nums;
 }
 .ls-time-hours { font-weight:700; color:#fff; }
 .ls-time-colon { font-weight:500; color:rgba(255,255,255,0.4); margin:0 -2px; }
@@ -253,15 +253,15 @@ html,body {
 
 #ls-music {
   background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
-  border-radius:24px; padding:3vh 3vw; width:calc(180px + 12vw); display:flex; flex-direction:column; gap:1.5vh; align-items:center; justify-content:center;
+  border-radius:24px; padding:3vh 3vw; width:calc(180px + 12vw); display:flex; flex-direction:column; gap:1.5vh;
 }
-#ls-title    { font-size:calc(13px + 0.5vw); font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width: 100%; text-align: center; }
-#ls-artist   { font-size:calc(11px + 0.2vw); color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width: 100%; text-align: center; }
-#ls-controls { display:flex; justify-content:center; align-items:center; gap:4vw; width: 100%; }
+#ls-title    { font-size:calc(13px + 0.5vw); font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#ls-artist   { font-size:calc(11px + 0.2vw); color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#ls-controls { display:flex; justify-content:center; align-items:center; gap:4vw; }
 .ls-ctrl-btn { width:42px; height:42px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:50%; display:flex; align-items:center; justify-content:center; }
 #ls-play-btn { width:52px; height:52px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.2); border-radius:50%; display:flex; align-items:center; justify-content:center; }
 #ls-play-btn svg { transform:translateX(1px); }
-#ls-hint { font-size:9px; color:rgba(255,255,255,.2); letter-spacing:.08em; text-transform:uppercase; text-align:center; font-weight:500; width: 100%; }
+#ls-hint { font-size:9px; color:rgba(255,255,255,.2); letter-spacing:.08em; text-transform:uppercase; text-align:center; font-weight:500; }
 </style>
 </head>
 <body>
@@ -676,64 +676,44 @@ function onSpotifyLinked() {
   document.getElementById('spotify-badge').classList.add('linked');
   document.getElementById('spotify-label').textContent='Spotify ✓';
   document.getElementById('setup-overlay').classList.remove('show');
-  startPolling(); loadPlaylists();
+  startPolling(); loadPlaylists(); // Carica le playlist subito dopo l'autenticazione
 }
 
-/* ── LOGICA RECUPERO E AVVIO PLAYLIST ── */
+/* ── LOGICA RECUPERO E AVVIO PLAYLIST (Novità) ── */
 async function loadPlaylists() {
   const data = await spotifyCall('/me/playlists?limit=20');
   const container = document.getElementById('playlist-list');
-  
   if (!data || !data.items || data.items.length === 0) {
     container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted); font-size:12px;">Nessuna playlist trovata.</div>';
     return;
   }
-
-  // Suddivisione tra ascoltate di recente (es. prime 4) e le tue playlist
-  const recentPlaylists = data.items.slice(0, 4);
-  const myPlaylists = data.items.slice(4);
-
-  container.innerHTML = `
-    <div style="font-size: 12px; font-weight: 700; color: var(--accent2); margin-bottom: 4px;">Ascoltate di recente</div>
-    <div id="recents-container" style="display:flex; flex-direction:column; gap:8px;"></div>
-    <div style="font-size: 12px; font-weight: 700; color: var(--accent2); margin-top: 12px; margin-bottom: 4px;">Le tue playlist</div>
-    <div id="others-container" style="display:flex; flex-direction:column; gap:8px;"></div>
-  `;
-
-  const renderList = (items, targetId) => {
-    const target = document.getElementById(targetId);
-    if(items.length === 0) {
-      target.innerHTML = '<div style="padding:10px; font-size:11px; color:var(--muted)">Nessuna playlist in questa sezione</div>';
-      return;
-    }
-    items.forEach(pl => {
-      if (!pl) return;
-      const imgUrl = pl.images?.[0]?.url || '';
-      const item = document.createElement('div');
-      item.className = 'playlist-item';
-      item.innerHTML = `
-        <img class="playlist-img" src="${imgUrl}" alt="Cover">
-        <div class="playlist-info">
-          <span class="playlist-name">${pl.name}</span>
-          <span class="playlist-tracks">${pl.tracks?.total || 0} brani</span>
-        </div>
-      `;
-      item.addEventListener('click', async () => {
-        await spotifyCall('/me/player/play', 'PUT', { context_uri: pl.uri });
-        document.getElementById('playlist-overlay').classList.remove('show');
-        setTimeout(pollPlayback, 500);
-      });
-      target.appendChild(item);
+  container.innerHTML = '';
+  data.items.forEach(pl => {
+    if (!pl) return;
+    const imgUrl = pl.images?.[0]?.url || '';
+    const item = document.createElement('div');
+    item.className = 'playlist-item';
+    item.innerHTML = `
+      <img class="playlist-img" src="${imgUrl}" alt="Cover">
+      <div class="playlist-info">
+        <span class="playlist-name">${pl.name}</span>
+        <span class="playlist-tracks">${pl.tracks?.total || 0} brani</span>
+      </div>
+    `;
+    item.addEventListener('click', async () => {
+      // Invia il comando a Spotify per riprodurre il contesto della playlist selezionata
+      await spotifyCall('/me/player/play', 'PUT', { context_uri: pl.uri });
+      document.getElementById('playlist-overlay').classList.remove('show');
+      setTimeout(pollPlayback, 500);
     });
-  };
-
-  renderList(recentPlaylists, 'recents-container');
-  renderList(myPlaylists, 'others-container');
+    container.appendChild(item);
+  });
 }
 
 /* ── INTERFACCE, COMPORTAMENTI E BOTTONI ── */
 document.getElementById('play-btn').addEventListener('click', async () => {
   const act = currentlyPlaying ? '/me/player/pause' : '/me/player/play';
+  // Inviamo un oggetto vuoto {} per far sì che Spotify riprenda la riproduzione dal punto esatto
   await spotifyCall(act, 'PUT', currentlyPlaying ? null : {}); 
   setPlayState(!currentlyPlaying); 
   setTimeout(pollPlayback, 400);
