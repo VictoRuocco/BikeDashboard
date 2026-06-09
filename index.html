@@ -182,59 +182,31 @@ html,body {
 #spotify-dot { width:6px; height:6px; border-radius:50%; background:var(--muted); }
 #spotify-badge.linked #spotify-dot { background:var(--spotify); }
 
-/* ── DROPDOWN DELLE PLAYLIST (Corretto) ── */
-#playlist-wrapper {
-  position: relative;
-  display: inline-block;
-}
+/* ── PANNELLO DELLE PLAYLIST (Novità) ── */
 #playlist-overlay {
-  display: none; 
-  position: absolute; 
-  top: calc(100% + 8px); 
-  right: 0; 
-  z-index: 250; 
-  background: var(--surf); 
-  border: 1px solid var(--border); 
-  border-radius: 14px; 
-  width: 280px; 
-  max-height: 40vh; 
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  flex-direction: column; 
-  overflow: hidden;
+  display:none; position:fixed; inset:0; z-index:250; background:rgba(0,0,0,.8); backdrop-filter:blur(8px); align-items:center; justify-content:center;
 }
-#playlist-overlay.show { display: flex; }
+#playlist-overlay.show { display:flex; }
+#playlist-card {
+  background:var(--surf); border:1px solid var(--border); border-radius:20px; width:min(85vw, 460px); height:75vh; display:flex; flex-direction:column; overflow:hidden;
+}
 #playlist-header {
-  padding: 10px 14px; 
-  border-bottom: 1px solid var(--border); 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center;
+  padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:between; align-items:center; justify-content: space-between;
 }
-#playlist-header h3 { font-size: 11px; font-weight: 600; color: var(--accent2); text-transform: uppercase; letter-spacing: .05em; }
+#playlist-header h3 { font-size:15px; font-weight:600; color:var(--accent2); }
+#btn-playlist-close { background:none; border:none; color:var(--text2); font-size:20px; cursor:pointer; font-weight:300; }
 #playlist-list {
-  flex: 1; 
-  overflow-y: auto; 
-  padding: 6px; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 4px;
+  flex:1; overflow-y:auto; padding:10px 16px; display:flex; flex-direction:column; gap:8px;
   -webkit-overflow-scrolling: touch;
 }
 .playlist-item {
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-  background: transparent; 
-  border-radius: 8px; 
-  padding: 6px 10px; 
-  cursor: pointer; 
-  transition: all 0.2s;
+  display:flex; align-items:center; gap:12px; background:var(--surf2); border:1px solid transparent; border-radius:12px; padding:8px 12px; cursor:pointer; transition:all 0.2s;
 }
-.playlist-item:hover { background: var(--surf3); }
-.playlist-img { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; background: var(--surf3); }
-.playlist-info { display: flex; flex-direction: column; min-width: 0; }
-.playlist-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.playlist-tracks { font-size: 9px; color: var(--muted); margin-top: 1px; }
+.playlist-item:hover { border-color:var(--border); background:var(--surf3); }
+.playlist-img { width:44px; height:44px; border-radius:6px; object-fit:cover; background:var(--surf3); }
+.playlist-info { display:flex; flex-direction:column; min-width:0; }
+.playlist-name { font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.playlist-tracks { font-size:10px; color:var(--muted); margin-top:2px; }
 
 /* ── SETUP OVERLAY ── */
 #setup-overlay {
@@ -263,7 +235,7 @@ html,body {
 #ls-clock { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2vh; }
 #ls-samsung-time-wrap {
   display:flex; align-items:center; justify-content:center; font-family:'Oswald', sans-serif;
-  font-size:calc(66px + 7.5vw); line-height:0.85; letter-spacing:-0.02em; font-variant-numeric: tabular-nums;
+  font-size:calc(50px + 6vw); line-height:0.85; letter-spacing:-0.02em; font-variant-numeric: tabular-nums;
 }
 .ls-time-hours { font-weight:700; color:#fff; }
 .ls-time-colon { font-weight:500; color:rgba(255,255,255,0.4); margin:0 -2px; }
@@ -279,17 +251,36 @@ html,body {
 #ls-wx-icon-holder svg { width:100%; height:100%; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
 #ls-wx-temp { font-family:'Oswald', sans-serif; font-size:calc(22px + 2vw); font-weight:300; color:#fff; line-height:1; }
 
+/* Previsioni pioggia lockscreen */
+#ls-wx-forecasts { display:flex; gap:1.5vw; margin-top: 1vh; }
+.ls-hr-forecast { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.04); padding:6px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); }
+.ls-hr-time { font-size:9px; font-weight:700; color:rgba(255,255,255,0.4); text-transform:uppercase; }
+.ls-hr-icon { width:16px; height:16px; color:rgba(255,255,255,0.7); display:flex; align-items:center; }
+.ls-hr-icon svg { width:100%; height:100%; fill:none; stroke:currentColor; stroke-width:1.8; }
+.ls-hr-pop  { font-size:calc(10px + 0.2vw); font-weight:600; color:rgba(255,255,255,0.7); font-variant-numeric:tabular-nums; }
+.ls-hr-pop.rainy { color:var(--accent2); }
+
 #ls-music {
-  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
-  border-radius:24px; padding:3vh 3vw; width:calc(180px + 12vw); display:flex; flex-direction:column; gap:1.5vh;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+  border-radius:24px; padding:3.5vh 3.5vw; width:min(85vw, 380px); display:flex; flex-direction:column; gap:2vh;
 }
-#ls-title    { font-size:calc(13px + 0.5vw); font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#ls-artist   { font-size:calc(11px + 0.2vw); color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#ls-title    { font-size:calc(14px + 0.6vw); font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#ls-artist   { font-size:calc(11px + 0.3vw); color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #ls-controls { display:flex; justify-content:center; align-items:center; gap:4vw; }
-.ls-ctrl-btn { width:42px; height:42px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:50%; display:flex; align-items:center; justify-content:center; }
-#ls-play-btn { width:52px; height:52px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.2); border-radius:50%; display:flex; align-items:center; justify-content:center; }
-#ls-play-btn svg { transform:translateX(1px); }
-#ls-hint { font-size:9px; color:rgba(255,255,255,.2); letter-spacing:.08em; text-transform:uppercase; text-align:center; font-weight:500; }
+
+.ls-ctrl-btn {
+  width:calc(34px + 1.5vw); height:calc(34px + 1.5vw); max-width:48px; max-height:48px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+}
+.ls-ctrl-btn svg { width:45%; height:45%; }
+
+#ls-play-btn {
+  width:calc(42px + 2vw); height:calc(42px + 2vw); max-width:58px; max-height:58px;
+  background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.2); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+}
+#ls-play-btn svg { width:45%; height:45%; transform:translateX(1px); }
+
+#ls-hint { font-size:9px; color:rgba(255,255,255,.2); letter-spacing:.08em; text-transform:uppercase; text-align:center; font-weight:500; margin-top: 0.5vh; }
 </style>
 </head>
 <body>
@@ -404,20 +395,9 @@ html,body {
             <svg viewBox="0 0 24 24" fill="none"><path d="M5 4l10 8-10 8V4Z" fill="#f0f0fa"/><rect x="16.5" y="4" width="2.5" height="16" rx="1.25" fill="#f0f0fa"/></svg>
           </button>
           
-          <div id="playlist-wrapper">
-            <button class="ctrl-btn" id="btn-playlists-open" type="button" title="Le mie playlist">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#f0f0fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-            </button>
-            
-            <div id="playlist-overlay">
-              <div id="playlist-header">
-                <h3>Le Tue Playlist</h3>
-              </div>
-              <div id="playlist-list">
-                <div style="text-align:center; padding:20px; color:var(--text2); font-size:11px;">Caricamento...</div>
-              </div>
-            </div>
-          </div>
+          <button class="ctrl-btn" id="btn-playlists-open" type="button" title="Le mie playlist">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#f0f0fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          </button>
         </div>
 
         <div id="media-status">Connetti Spotify per iniziare</div>
@@ -429,6 +409,18 @@ html,body {
       </div>
     </div>
 
+  </div>
+</div>
+
+<div id="playlist-overlay">
+  <div id="playlist-card">
+    <div id="playlist-header">
+      <h3>Le Tue Playlist Preferite</h3>
+      <button id="btn-playlist-close" type="button">×</button>
+    </div>
+    <div id="playlist-list">
+      <div style="text-align:center; padding:40px; color:var(--text2); font-size:13px;">Caricamento playlist...</div>
+    </div>
   </div>
 </div>
 
@@ -453,27 +445,44 @@ html,body {
       <span class="ls-time-mins" id="ls-txt-mins">00</span>
     </div>
     <div id="ls-date">—</div>
+    
     <div id="ls-weather">
       <div id="ls-wx-icon-holder">
         <svg viewBox="0 0 24 24"><path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-1.77-1.32-3.23-3.05-3.46C17.43 9.47 15.03 7 12 7c-2.42 0-4.5 1.58-5.21 3.82C4.48 11.12 3 12.89 3 15a4 4 0 0 0 4 4z"/></svg>
       </div>
       <div id="ls-wx-temp">—</div>
     </div>
+
+    <div id="ls-wx-forecasts">
+      <div class="ls-hr-forecast">
+        <span class="ls-hr-time">+1h</span>
+        <div class="ls-hr-icon" id="ls-hr1-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg></div>
+        <span class="ls-hr-pop" id="ls-hr1-pop">--%</span>
+      </div>
+      <div class="ls-hr-forecast">
+        <span class="ls-hr-time">+2h</span>
+        <div class="ls-hr-icon" id="ls-hr2-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg></div>
+        <span class="ls-hr-pop" id="ls-hr2-pop">--%</span>
+      </div>
+    </div>
   </div>
+
   <div id="ls-music">
     <div id="ls-title">Nessuna traccia</div>
     <div id="ls-artist">—</div>
+    
     <div id="ls-controls">
       <button class="ls-ctrl-btn" id="ls-prev" type="button">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M19 20L9 12l10-8v16Z" fill="#fff"/><rect x="5" y="4" width="2.5" height="16" rx="1.25" fill="#fff"/></svg>
+        <svg viewBox="0 0 24 24" fill="none"><path d="M19 20L9 12l10-8v16Z" fill="#f0f0fa"/><rect x="5" y="4" width="2.5" height="16" rx="1.25" fill="#f0f0fa"/></svg>
       </button>
       <button id="ls-play-btn" type="button">
-        <svg id="ls-play-icon" viewBox="0 0 24 24" fill="none"><path d="M6 4l14 8-14 8V4Z" fill="#fff"/></svg>
+        <svg id="ls-play-icon" viewBox="0 0 24 24" fill="none"><path d="M6 4l14 8-14 8V4Z" fill="#ffffff"/></svg>
       </button>
       <button class="ls-ctrl-btn" id="ls-next" type="button">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M5 4l10 8-10 8V4Z" fill="#fff"/><rect x="16.5" y="4" width="2.5" height="16" rx="1.25" fill="#fff"/></svg>
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 4l10 8-10 8V4Z" fill="#f0f0fa"/><rect x="16.5" y="4" width="2.5" height="16" rx="1.25" fill="#f0f0fa"/></svg>
       </button>
     </div>
+    
     <div id="ls-hint">Tocca per sbloccare</div>
   </div>
 </div>
@@ -573,12 +582,22 @@ async function loadWeather() {
       document.getElementById('hr1-icon').innerHTML = SVG_ICONS[WX_MAPPING[code1h] || 'clear'];
       document.getElementById('hr1-pop').textContent = `${pop1h}%`;
       document.getElementById('hr1-pop').className = pop1h > 20 ? "hr-pop rainy" : "hr-pop";
+      
+      // Specchio su lockscreen
+      document.getElementById('ls-hr1-icon').innerHTML = SVG_ICONS[WX_MAPPING[code1h] || 'clear'];
+      document.getElementById('ls-hr1-pop').textContent = `${pop1h}%`;
+      document.getElementById('ls-hr1-pop').className = pop1h > 20 ? "ls-hr-pop rainy" : "ls-hr-pop";
 
       const code2h = data.hourly.weathercode[currentHourIndex + 2] || 0;
       const pop2h  = data.hourly.precipitation_probability[currentHourIndex + 2] ?? 0;
       document.getElementById('hr2-icon').innerHTML = SVG_ICONS[WX_MAPPING[code2h] || 'clear'];
       document.getElementById('hr2-pop').textContent = `${pop2h}%`;
       document.getElementById('hr2-pop').className = pop2h > 20 ? "hr-pop rainy" : "hr-pop";
+      
+      // Specchio su lockscreen
+      document.getElementById('ls-hr2-icon').innerHTML = SVG_ICONS[WX_MAPPING[code2h] || 'clear'];
+      document.getElementById('ls-hr2-pop').textContent = `${pop2h}%`;
+      document.getElementById('ls-hr2-pop').className = pop2h > 20 ? "ls-hr-pop rainy" : "ls-hr-pop";
     } catch(e) { document.getElementById('wx-desc').textContent = 'Errore dati meteo'; }
   }, () => { document.getElementById('wx-desc').textContent = 'Segnale GPS assente'; });
 }
@@ -748,27 +767,11 @@ document.getElementById('ls-play-btn').addEventListener('click', e=>{ e.stopProp
 document.getElementById('ls-prev').addEventListener('click',     e=>{ e.stopPropagation(); document.getElementById('btn-prev').click(); });
 document.getElementById('ls-next').addEventListener('click',     e=>{ e.stopPropagation(); document.getElementById('btn-next').click(); });
 
-// Gestione Menu a Tendina Playlist
+// Gestione Finestra Playlist
 const playlistOverlay = document.getElementById('playlist-overlay');
-const playlistWrapper = document.getElementById('playlist-wrapper');
-
-document.getElementById('btn-playlists-open').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const isShown = playlistOverlay.classList.contains('show');
-  if (!isShown) {
-    playlistOverlay.classList.add('show');
-    loadPlaylists();
-  } else {
-    playlistOverlay.classList.remove('show');
-  }
-});
-
-// Chiusura intelligente
-document.addEventListener('click', (e) => {
-  if (!playlistWrapper.contains(e.target)) {
-    playlistOverlay.classList.remove('show');
-  }
-});
+document.getElementById('btn-playlists-open').addEventListener('click', () => { playlistOverlay.classList.add('show'); loadPlaylists(); });
+document.getElementById('btn-playlist-close').addEventListener('click', () => playlistOverlay.classList.remove('show'));
+playlistOverlay.addEventListener('click', e => { if (e.target === playlistOverlay) playlistOverlay.classList.remove('show'); });
 
 // Gestione Configurazione Setup
 const setupOverlay=document.getElementById('setup-overlay');
