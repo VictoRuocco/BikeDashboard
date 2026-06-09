@@ -43,9 +43,9 @@ html,body {
   justify-content:space-between; padding:0 2vw;
   background:var(--surf); border-bottom:1px solid var(--border); flex-shrink:0;
 }
-#brand-wrap { display:flex; align-items:center; gap:8px; }
-/* Miniaturizzazione perfetta della tua icona ufficiale */
-#app-icon { width:22px; height:22px; object-fit:contain; border-radius:4px; }
+#brand-wrap { display:flex; align-items:center; gap:10px; }
+/* Miniaturizzazione perfetta e pulita dell'icona ufficiale */
+#app-icon { width:22px; height:22px; object-fit:contain; border-radius:5px; }
 #logo { font-size:calc(10px + 0.3vw); font-weight:700; letter-spacing:.12em; color:var(--accent2); text-transform:uppercase; }
 
 .tog-wrap { display:flex; align-items:center; gap:8px; }
@@ -90,6 +90,7 @@ html,body {
   font-family:'Oswald', sans-serif;
   font-size:calc(46px + 4.2vw); line-height:0.85;
   letter-spacing:-0.02em;
+  font-variant-numeric: tabular-nums;
 }
 .time-hours { font-weight:700; color:var(--text); }
 .time-colon { font-weight:500; color:var(--accent2); opacity:0.8; margin:0 -2px; }
@@ -130,9 +131,7 @@ html,body {
 #wx-temp  { font-family:'Oswald', sans-serif; font-size:calc(34px + 2.5vw); font-weight:300; color:var(--text); line-height:1; }
 #wx-desc  { font-size:calc(10px + 0.4vw); color:var(--text2); text-align:center; line-height:1.2; width:90%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* ══════════════════════════════════════
-   COLONNA DESTRA (Player Spotify) - 58%
-══════════════════════════════════════ */
+/* ── COLONNA DESTRA (Player Spotify) ── */
 #music-panel {
   width:58%; height:100%; display:flex; flex-direction:row;
   align-items:center; padding:3vh 3vw; gap:3vw;
@@ -174,9 +173,7 @@ html,body {
 #play-btn svg { width:45%; height:45%; transform:translateX(1px); }
 
 #media-status { font-size:calc(9px + 0.2vw); color:var(--muted); letter-spacing:.04em; }
-#media-status.ok  { color:var(--green); }
 
-/* Badge Spotify */
 #spotify-badge {
   position:absolute; top:1.5vh; right:1.5vw;
   display:flex; align-items:center; gap:6px;
@@ -199,7 +196,6 @@ html,body {
   padding:24px; width:min(90vw,420px); display:flex; flex-direction:column; gap:16px;
 }
 #setup-card h2 { font-size:16px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; }
-#setup-card a  { color:var(--accent2); text-decoration:none; }
 .setup-field { display:flex; flex-direction:column; gap:6px; }
 .setup-label { font-size:10px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; }
 .setup-input {
@@ -219,12 +215,12 @@ html,body {
 
 #ls-clock { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2vh; }
 
-/* Orario Lockscreen asimmetrico grassetto/leggero */
 #ls-samsung-time-wrap {
   display:flex; align-items:center; justify-content:center;
   font-family:'Oswald', sans-serif;
   font-size:calc(66px + 7.5vw); line-height:0.85;
   letter-spacing:-0.02em;
+  font-variant-numeric: tabular-nums;
 }
 .ls-time-hours { font-weight:700; color:#fff; }
 .ls-time-colon { font-weight:500; color:rgba(255,255,255,0.4); margin:0 -2px; }
@@ -259,7 +255,7 @@ html,body {
 
   <div id="topbar">
     <div id="brand-wrap">
-      <img id="app-icon" src="Icon.png" alt="Icona">
+      <img id="app-icon" src="icon-192.png" alt="Icona">
       <span id="logo">BikeWidget</span>
     </div>
     <div class="tog-wrap">
