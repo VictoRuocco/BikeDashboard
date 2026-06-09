@@ -446,7 +446,7 @@ html,body {
 <div id="playlist-overlay">
   <div id="playlist-card">
     <div id="playlist-header">
-      <h3>Ascolti Recenti</h3>
+      <h3>Scegli Musica</h3>
       <button id="btn-playlist-close" type="button">×</button>
     </div>
     <div id="playlist-list">
@@ -775,130 +775,120 @@ function onSpotifyLinked() {
   document.getElementById('spotify-badge').classList.add('linked');
   document.getElementById('spotify-label').textContent='Spotify ✓';
   document.getElementById('setup-overlay').classList.remove('show');
-  startPolling(); loadPlaylists();
+  startPolling(); loadRecents();
 }
 
 /* ── CRONOLOGIA RECENTE E PLAYLIST SALVATE ── */
-async function loadPlaylists() {
+async function loadRecents() {
   const container = document.getElementById('playlist-list');
   container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Caricamento contenuti...</div>';
 
+  const recentData = await spotifyCall('/me/player/recently-played?limit=50');
   container.innerHTML = '';
 
-  // 1. SEZIONE: Ascolti Recenti (Misti)
-  const recentData = await spotifyCall('/me/player/recently-played?limit=20');
-  if (recentData && recentData.items && recentData.items.length > 0) {
-    const title1 = document.createElement('div');
-    title1.className = 'playlist-section-title';
-    title1.textContent = 'Ascolti Recenti';
-    container.appendChild(title1);
+  if (!recentData || !recentData.items || recentData.items.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Nessun ascolto recente trovato.</div>';
+    return;
+  }
 
-    const processedSignatures = new Set();
+  // Helper: crea e aggiunge una riga al container
+  function makeRow(imgUrl, name, sub, playFn) {
+    const row = document.createElement('div');
+    row.className = 'playlist-item';
+    const img = document.createElement('img');
+    img.className = 'playlist-img';
+    img.src = imgUrl || '';
+    img.alt = '';
+    img.onerror = () => { img.style.opacity = '0.3'; };
+    const info = document.createElement('div');
+    info.className = 'playlist-info';
+    info.innerHTML = `<span class="playlist-name">${name}</span><span class="playlist-tracks">${sub}</span>`;
+    row.appendChild(img);
+    row.appendChild(info);
+    row.addEventListener('click', async () => {
+      await playFn();
+      document.getElementById('playlist-overlay').classList.remove('show');
+      setTimeout(pollPlayback, 500);
+    });
+    return row;
+  }
 
-    for (const item of recentData.items) {
-      if (!item || !item.track) continue;
-      
-      let uri = item.track.uri;
-      let name = item.track.name || 'Brano';
-      let artist = item.track.artists?.[0]?.name || '';
-      let typeLabel = 'BRANO';
-      let imgUrl = item.track.album?.images?.[2]?.url || item.track.album?.images?.[0]?.url || '';
+  // Raccoglie contesti unici (playlist/album) e brani singoli separatamente
+  const seenUris   = new Set();
+  const contexts   = [];   // {type, uri} — playlist o album
+  const soloTracks = [];   // tracce senza contesto playlist/album
 
-      if (item.context && (item.context.type === 'playlist' || item.context.type === 'album')) {
-        uri = item.context.uri;
-        const parts = uri.split(':');
-        const type = parts[1];
-        const id = parts[2];
+  for (const item of recentData.items) {
+    if (!item || !item.track) continue;
 
-        if (type === 'playlist') {
-          const pData = await spotifyCall(`/playlists/${id}`);
-          if (pData) {
-            name = pData.name || 'Playlist';
-            imgUrl = pData.images?.[0]?.url || imgUrl;
-            typeLabel = 'PLAYLIST';
-            artist = '';
-          }
-        } else if (type === 'album') {
-          const aData = await spotifyCall(`/albums/${id}`);
-          if (aData) {
-            name = aData.name || 'Album';
-            imgUrl = aData.images?.[0]?.url || imgUrl;
-            typeLabel = 'ALBUM';
-            artist = aData.artists?.[0]?.name || '';
-          }
-        }
-      } else if (item.track.album && item.track.album.uri) {
-        uri = item.track.album.uri;
-        name = item.track.album.name || 'Album';
-        imgUrl = item.track.album.images?.[0]?.url || imgUrl;
-        typeLabel = 'ALBUM';
+    if (item.context && (item.context.type === 'playlist' || item.context.type === 'album')) {
+      // Contesto playlist o album: mostra il contenitore, non la singola traccia
+      const uri = item.context.uri;
+      if (!seenUris.has(uri)) {
+        seenUris.add(uri);
+        contexts.push({ type: item.context.type, uri });
       }
-
-      const signature = `${typeLabel}-${uri}`;
-      if (processedSignatures.has(signature)) continue;
-      processedSignatures.add(signature);
-
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'playlist-item';
-      itemDiv.innerHTML = `
-        <img class="playlist-img" src="${imgUrl}" alt="">
-        <div class="playlist-info">
-          <span class="playlist-name">${name}</span>
-          <span class="playlist-tracks">${typeLabel} ${artist ? '• ' + artist : ''}</span>
-        </div>
-      `;
-      
-      itemDiv.addEventListener('click', async () => {
-        if (uri.includes(':track:')) {
-          await spotifyCall('/me/player/play', 'PUT', { uris: [uri] });
-        } else {
-          await spotifyCall('/me/player/play', 'PUT', { context_uri: uri });
-        }
-        document.getElementById('playlist-overlay').classList.remove('show');
-        setTimeout(pollPlayback, 500);
-      });
-      
-      container.appendChild(itemDiv);
+    } else {
+      // Brano singolo (ascoltato da ricerca, link diretto, ecc.)
+      const uri = item.track.uri;
+      if (!seenUris.has(uri)) {
+        seenUris.add(uri);
+        soloTracks.push(item.track);
+      }
     }
   }
 
-  // 2. SEZIONE: Le tue Playlist (Libreria)
-  const playlistData = await spotifyCall('/me/playlists?limit=20');
-  if (playlistData && playlistData.items && playlistData.items.length > 0) {
-    const title2 = document.createElement('div');
-    title2.className = 'playlist-section-title';
-    title2.textContent = 'Le tue Playlist';
-    container.appendChild(title2);
+  // ── SEZIONE 1: Playlist e Album recenti ──
+  if (contexts.length > 0) {
+    const sec = document.createElement('div');
+    sec.className = 'playlist-section-title';
+    sec.textContent = 'Ascoltati di recente';
+    container.appendChild(sec);
 
-    for (const item of playlistData.items) {
-      if (!item) continue;
+    for (const ctx of contexts) {
+      const id = ctx.uri.split(':')[2];
 
-      const name = item.name || 'Playlist senza nome';
-      const imgUrl = item.images?.[0]?.url || '';
-      const uri = item.uri;
+      if (ctx.type === 'playlist') {
+        const d = await spotifyCall(`/playlists/${id}?fields=name,images,tracks.total,uri`);
+        if (!d) continue;
+        const imgUrl = d.images?.[0]?.url || '';
+        const sub    = `Playlist · ${d.tracks?.total ?? 0} brani`;
+        container.appendChild(makeRow(imgUrl, d.name || 'Playlist', sub, () =>
+          spotifyCall('/me/player/play', 'PUT', { context_uri: ctx.uri })
+        ));
 
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'playlist-item';
-      itemDiv.innerHTML = `
-        <img class="playlist-img" src="${imgUrl}" alt="">
-        <div class="playlist-info">
-          <span class="playlist-name">${name}</span>
-          <span class="playlist-tracks">${item.tracks?.total || 0} brani</span>
-        </div>
-      `;
-      
-      itemDiv.addEventListener('click', async () => {
-        await spotifyCall('/me/player/play', 'PUT', { context_uri: uri });
-        document.getElementById('playlist-overlay').classList.remove('show');
-        setTimeout(pollPlayback, 500);
-      });
-      
-      container.appendChild(itemDiv);
+      } else if (ctx.type === 'album') {
+        const d = await spotifyCall(`/albums/${id}`);
+        if (!d) continue;
+        const imgUrl  = d.images?.[0]?.url || '';
+        const artists = (d.artists || []).map(a => a.name).join(', ');
+        const sub     = `Album · ${artists}`;
+        container.appendChild(makeRow(imgUrl, d.name || 'Album', sub, () =>
+          spotifyCall('/me/player/play', 'PUT', { context_uri: ctx.uri })
+        ));
+      }
+    }
+  }
+
+  // ── SEZIONE 2: Brani singoli recenti ──
+  if (soloTracks.length > 0) {
+    const sec = document.createElement('div');
+    sec.className = 'playlist-section-title';
+    if (contexts.length > 0) sec.style.marginTop = '14px';
+    sec.textContent = 'Brani recenti';
+    container.appendChild(sec);
+
+    for (const track of soloTracks.slice(0, 15)) {
+      const imgUrl  = track.album?.images?.[0]?.url || '';
+      const artists = (track.artists || []).map(a => a.name).join(', ');
+      container.appendChild(makeRow(imgUrl, track.name || 'Brano', artists, () =>
+        spotifyCall('/me/player/play', 'PUT', { uris: [track.uri] })
+      ));
     }
   }
 
   if (container.children.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Nessun ascolto o playlist trovati.</div>';
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Nessun contenuto trovato.</div>';
   }
 }
 
@@ -916,7 +906,7 @@ document.getElementById('ls-next').addEventListener('click',     e=>{ e.stopProp
 
 // Gestione Finestra Playlist
 const playlistOverlay = document.getElementById('playlist-overlay');
-document.getElementById('btn-playlists-open').addEventListener('click', () => { playlistOverlay.classList.add('show'); loadPlaylists(); });
+document.getElementById('btn-playlists-open').addEventListener('click', () => { playlistOverlay.classList.add('show'); loadRecents(); });
 document.getElementById('btn-playlist-close').addEventListener('click', () => playlistOverlay.classList.remove('show'));
 playlistOverlay.addEventListener('click', e => { if (e.target === playlistOverlay) playlistOverlay.classList.remove('show'); });
 
