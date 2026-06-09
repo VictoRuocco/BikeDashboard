@@ -12,7 +12,7 @@
 <title>BikeWidget</title>
 <link rel="preconnect" href="http://googleusercontent.com/fonts.googleapis.com/0">
 <link rel="preconnect" href="http://googleusercontent.com/fonts.gstatic.com/0" crossorigin>
-<link href="http://googleusercontent.com/fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="http://googleusercontent.com/fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Oswald:wght@300;500;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after {
   margin:0; padding:0; box-sizing:border-box;
@@ -43,7 +43,11 @@ html,body {
   justify-content:space-between; padding:0 2vw;
   background:var(--surf); border-bottom:1px solid var(--border); flex-shrink:0;
 }
-#logo { font-size:calc(10px + 0.3vw); font-weight:700; letter-spacing:.15em; color:var(--accent2); text-transform:uppercase; }
+#brand-wrap { display:flex; align-items:center; gap:8px; }
+/* Miniaturizzazione perfetta della tua icona ufficiale */
+#app-icon { width:22px; height:22px; object-fit:contain; border-radius:4px; }
+#logo { font-size:calc(10px + 0.3vw); font-weight:700; letter-spacing:.12em; color:var(--accent2); text-transform:uppercase; }
+
 .tog-wrap { display:flex; align-items:center; gap:8px; }
 .tog-label { font-size:calc(9px + 0.2vw); color:var(--muted); letter-spacing:.06em; text-transform:uppercase; font-weight:500; }
 .tog { position:relative; width:40px; height:20px; cursor:pointer; }
@@ -71,27 +75,34 @@ html,body {
   padding:1.5vh 1.5vw; gap:1.5vh;
 }
 
-/* Pannello orologio (Riga 1) */
+/* Pannello orologio (Stile Samsung) */
 #clock-panel {
   flex:1.2; display:flex; flex-direction:column;
   align-items:center; justify-content:center;
   background:var(--surf2); border-radius:16px;
   border:1px solid var(--border);
-  padding:1.5vh; gap:0.6vh;
+  padding:1.5vh; gap:0.4vh;
 }
-#clock-time {
-  font-size:calc(40px + 4vw); font-weight:100;
-  letter-spacing:-.04em; color:var(--text);
-  font-variant-numeric:tabular-nums;
-  line-height:0.9;
-}
-#clock-date { font-size:calc(10px + 0.4vw); color:var(--text2); letter-spacing:.08em; text-transform:uppercase; text-align:center; font-weight:400; }
 
-#ring-wrap { position:relative; width:calc(34px + 2.4vh); height:calc(34px + 2.4vh); margin:0.4vh 0; }
+/* Container cifre orario */
+#samsung-time-wrap {
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Oswald', sans-serif;
+  font-size:calc(46px + 4.2vw); line-height:0.85;
+  letter-spacing:-0.02em;
+}
+.time-hours { font-weight:700; color:var(--text); }
+.time-colon { font-weight:500; color:var(--accent2); opacity:0.8; margin:0 -2px; }
+.time-mins  { font-weight:300; color:var(--text); opacity:0.95; }
+
+#clock-date { font-size:calc(10px + 0.4vw); color:var(--text2); letter-spacing:.08em; text-transform:uppercase; text-align:center; font-weight:400; margin-top:2px; }
+
+/* Cerchietto Secondi */
+#ring-wrap { position:relative; width:calc(34px + 2.4vh); height:calc(34px + 2.4vh); margin:0.6vh 0; }
 #ring-wrap svg { width:100%; height:100%; transform:rotate(-90deg); }
 #ring-bg   { stroke:var(--surf3); }
 #ring-fill { stroke:var(--accent); stroke-linecap:round; stroke-dasharray:213.6; stroke-dashoffset:213.6; transition:stroke-dashoffset .9s linear; }
-#ring-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:calc(11px + 0.4vw); color:var(--accent2); font-variant-numeric:tabular-nums; font-weight:300; letter-spacing:0.02em; }
+#ring-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Oswald', sans-serif; font-size:calc(12px + 0.4vw); color:var(--accent2); font-variant-numeric:tabular-nums; font-weight:500; }
 
 #awake-btn {
   display:flex; align-items:center; gap:6px;
@@ -116,7 +127,7 @@ html,body {
 #wx-info-row { display:flex; align-items:center; justify-content:center; gap:2vw; width:100%; }
 #wx-icon-holder { width:calc(32px + 3.5vh); height:calc(32px + 3.5vh); display:flex; align-items:center; justify-content:center; color:var(--text); }
 #wx-icon-holder svg { width:100%; height:100%; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
-#wx-temp  { font-size:calc(32px + 2.5vw); font-weight:100; color:var(--text); line-height:1; font-variant-numeric:tabular-nums; }
+#wx-temp  { font-family:'Oswald', sans-serif; font-size:calc(34px + 2.5vw); font-weight:300; color:var(--text); line-height:1; }
 #wx-desc  { font-size:calc(10px + 0.4vw); color:var(--text2); text-align:center; line-height:1.2; width:90%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* ══════════════════════════════════════
@@ -206,9 +217,20 @@ html,body {
 }
 #lockscreen.show { display:flex; }
 
-#ls-clock { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1vh; }
-#ls-time  { font-size:calc(56px + 7vw); font-weight:100; color:#fff; letter-spacing:-.04em; font-variant-numeric:tabular-nums; line-height:1; }
-#ls-date  { font-size:calc(11px + 0.3vw); color:rgba(255,255,255,.4); letter-spacing:.1em; text-transform:uppercase; font-weight:400; margin-bottom:0.5vh; }
+#ls-clock { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2vh; }
+
+/* Orario Lockscreen asimmetrico grassetto/leggero */
+#ls-samsung-time-wrap {
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Oswald', sans-serif;
+  font-size:calc(66px + 7.5vw); line-height:0.85;
+  letter-spacing:-0.02em;
+}
+.ls-time-hours { font-weight:700; color:#fff; }
+.ls-time-colon { font-weight:500; color:rgba(255,255,255,0.4); margin:0 -2px; }
+.ls-time-mins  { font-weight:300; color:#fff; opacity:0.9; }
+
+#ls-date  { font-size:calc(11px + 0.3vw); color:rgba(255,255,255,.4); letter-spacing:.1em; text-transform:uppercase; font-weight:400; margin-bottom:0.4vh; }
 
 #ls-weather {
   display:flex; align-items:center; gap:1.5vw;
@@ -217,7 +239,7 @@ html,body {
 }
 #ls-wx-icon-holder { width:calc(22px + 2.2vh); height:calc(22px + 2.2vh); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.85); }
 #ls-wx-icon-holder svg { width:100%; height:100%; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
-#ls-wx-temp { font-size:calc(20px + 2vw); font-weight:200; color:#fff; font-variant-numeric:tabular-nums; line-height:1; }
+#ls-wx-temp { font-family:'Oswald', sans-serif; font-size:calc(22px + 2vw); font-weight:300; color:#fff; line-height:1; }
 
 #ls-music {
   background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
@@ -236,7 +258,10 @@ html,body {
 <div id="app">
 
   <div id="topbar">
-    <span id="logo">🚴 BikeWidget</span>
+    <div id="brand-wrap">
+      <img id="app-icon" src="Icon.png" alt="Icona">
+      <span id="logo">BikeWidget</span>
+    </div>
     <div class="tog-wrap">
       <span class="tog-label">Normale</span>
       <label class="tog">
@@ -253,7 +278,11 @@ html,body {
     <div id="left-col">
       
       <div id="clock-panel">
-        <div id="clock-time">00:00</div>
+        <div id="samsung-time-wrap">
+          <span class="time-hours" id="txt-hours">00</span>
+          <span class="time-colon">:</span>
+          <span class="time-mins" id="txt-mins">00</span>
+        </div>
         <div id="clock-date">—</div>
         
         <div id="ring-wrap">
@@ -346,7 +375,11 @@ html,body {
 
 <div id="lockscreen">
   <div id="ls-clock">
-    <div id="ls-time">00:00</div>
+    <div id="ls-samsung-time-wrap">
+      <span class="ls-time-hours" id="ls-txt-hours">00</span>
+      <span class="ls-time-colon">:</span>
+      <span class="ls-time-mins" id="ls-txt-mins">00</span>
+    </div>
     <div id="ls-date">—</div>
     <div id="ls-weather">
       <div id="ls-wx-icon-holder">
@@ -418,11 +451,14 @@ function updateClock() {
   const now = new Date();
   const h = pad(now.getHours()), m = pad(now.getMinutes()), s = pad(now.getSeconds());
   
-  // Orologio principale focalizzato su HH:MM
-  document.getElementById('clock-time').textContent = `${h}:${m}`;
-  document.getElementById('ls-time').textContent    = `${h}:${m}`;
+  // Aggiornamento asimmetrico: divide ore e minuti per gestire pesi font differenti
+  document.getElementById('txt-hours').textContent = h;
+  document.getElementById('txt-mins').textContent  = m;
   
-  // Sposta i secondi correnti all'interno del cerchietto grafico
+  document.getElementById('ls-txt-hours').textContent = h;
+  document.getElementById('ls-txt-mins').textContent  = m;
+  
+  // Inietta i secondi dinamici nel cerchio
   document.getElementById('ring-label').textContent = s;
   
   const ds = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
