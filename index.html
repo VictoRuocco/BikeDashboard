@@ -63,6 +63,7 @@ html,body {
 .bat-level { height:100%; width:0%; background:var(--green); border-radius:1px; transition:width .3s, background .3s; }
 .bat-shell.charging .bat-level { background:var(--amber); }
 
+/* ── TOGGLE MODALITÀ ── */
 #topbar-toggle-wrap { 
   display:flex; align-items:center; gap:6px;
   background:var(--surf2); height:26px; padding:0 10px; border-radius:13px;
@@ -182,7 +183,7 @@ html,body {
 #spotify-dot { width:6px; height:6px; border-radius:50%; background:var(--muted); }
 #spotify-badge.linked #spotify-dot { background:var(--spotify); }
 
-/* ── PANNELLO DELLE PLAYLIST (Novità) ── */
+/* ── PANNELLO DELLE PLAYLIST ── */
 #playlist-overlay {
   display:none; position:fixed; inset:0; z-index:250; background:rgba(0,0,0,.8); backdrop-filter:blur(8px); align-items:center; justify-content:center;
 }
@@ -226,19 +227,19 @@ html,body {
 #btn-spotify-login { background:var(--spotify); color:#000; }
 #btn-setup-close   { background:var(--surf3); color:var(--text2); }
 
-/* ── LOCKSCREEN OVERLAY ── */
+/* ── LOCKSCREEN OVERLAY (Modificato: unico pannello fluido senza cornici interne) ── */
 #lockscreen {
   display: none; position: fixed; inset: 0; background: #000; z-index: 200; cursor: pointer;
 }
 #lockscreen.show { 
-  display: flex; /* Pannelli affiancati a schermo intero */
+  display: flex;
 }
 
 .ls-panel-half {
   width: 50vw; height: 100vh;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   box-sizing: border-box; padding: 4vw;
-  gap: 2.5vh;
+  gap: 3vh;
 }
 
 #ls-left-panel {
@@ -262,16 +263,14 @@ html,body {
 #ls-date  { font-size:calc(11px + 0.3vw); color:rgba(255,255,255,.4); letter-spacing:.1em; text-transform:uppercase; font-weight:400; margin-bottom:0.4vh; }
 
 #ls-weather {
-  display:flex; align-items:center; gap:1.5vw; background:rgba(255,255,255,0.04); padding:0.8vh 2.5vw;
-  border-radius:14px; border:1px solid rgba(255,255,255,0.06);
+  display:flex; align-items:center; gap:1.5vw;
 }
 #ls-wx-icon-holder { width:calc(22px + 2.2vh); height:calc(22px + 2.2vh); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.85); }
 #ls-wx-icon-holder svg { width:100%; height:100%; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
 #ls-wx-temp { font-family:'Oswald', sans-serif; font-size:calc(22px + 2vw); font-weight:300; color:#fff; line-height:1; }
 
-/* Previsioni pioggia lockscreen */
 #ls-wx-forecasts { display:flex; gap:1.5vw; }
-.ls-hr-forecast { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.04); padding:6px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); }
+.ls-hr-forecast { display:flex; align-items:center; gap:6px; }
 .ls-hr-time { font-size:9px; font-weight:700; color:rgba(255,255,255,0.4); text-transform:uppercase; }
 .ls-hr-icon { width:16px; height:16px; color:rgba(255,255,255,0.7); display:flex; align-items:center; }
 .ls-hr-icon svg { width:100%; height:100%; fill:none; stroke:currentColor; stroke-width:1.8; }
@@ -279,12 +278,12 @@ html,body {
 .ls-hr-pop.rainy { color:var(--accent2); }
 
 #ls-music {
-  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
-  border-radius:24px; padding:3.5vh 3.5vw; width:100%; max-width: 380px; display:flex; flex-direction:column; gap:2vh;
+  width:100%; max-width: 380px;
+  display:flex; flex-direction:column; align-items: center; gap:2vh;
 }
-#ls-title    { font-size:calc(14px + 0.6vw); font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#ls-artist   { font-size:calc(11px + 0.3vw); color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#ls-controls { display:flex; justify-content:center; align-items:center; gap:4vw; }
+#ls-title    { font-size:calc(16px + 0.6vw); font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width: 100%; text-align: center; }
+#ls-artist   { font-size:calc(12px + 0.3vw); color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width: 100%; text-align: center; }
+#ls-controls { display:flex; justify-content:center; align-items:center; gap:4vw; width: 100%; }
 
 .ls-ctrl-btn {
   width:calc(34px + 1.5vw); height:calc(34px + 1.5vw); max-width:48px; max-height:48px;
@@ -433,7 +432,7 @@ html,body {
 <div id="playlist-overlay">
   <div id="playlist-card">
     <div id="playlist-header">
-      <h3>Musica Recente</h3>
+      <h3>Playlist Recenti e Preferite</h3>
       <button id="btn-playlist-close" type="button">×</button>
     </div>
     <div id="playlist-list">
@@ -765,12 +764,11 @@ function onSpotifyLinked() {
   startPolling(); loadPlaylists();
 }
 
-/* ── LOGICA RECUPERO E AVVIO PLAYLIST E BRANI RECENTI ── */
+/* ── LOGICA CARICAMENTO PLAYLIST RECENTI E PREFERITE ── */
 async function loadPlaylists() {
   const container = document.getElementById('playlist-list');
   container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text2); font-size:13px;">Caricamento contenuti...</div>';
 
-  // Chiamate parallele per musica recente e playlist
   const [recentData, playlistsData] = await Promise.all([
     spotifyCall('/me/player/recently-played?limit=10'),
     spotifyCall('/me/playlists?limit=20')
@@ -778,49 +776,66 @@ async function loadPlaylists() {
 
   container.innerHTML = '';
 
-  // 1. Sezione Musica Ascoltata di recente
+  // 1. Playlist recenti (ricavate dalla cronologia d'ascolto per contesto/album/playlist)
   if (recentData && recentData.items && recentData.items.length > 0) {
     const recHeader = document.createElement('div');
     recHeader.style.fontSize = '12px';
     recHeader.style.fontWeight = '700';
     recHeader.style.color = 'var(--accent2)';
     recHeader.style.padding = '4px 0 8px 4px';
-    recHeader.textContent = 'Ascoltati di recente';
+    recHeader.textContent = 'Playlist Recenti';
     container.appendChild(recHeader);
 
-    const seenUris = new Set();
-    recentData.items.forEach(item => {
-      const track = item.track;
-      if (!track || seenUris.has(track.uri)) return;
-      seenUris.add(track.uri);
+    const seenContexts = new Set();
+    let added = 0;
+    
+    for (const item of recentData.items) {
+      const context = item.context;
+      // Filtra per mostrare contesti/playlist unici associati agli ascolti recenti
+      if (context && context.type === 'playlist' && !seenContexts.has(context.uri)) {
+        seenContexts.add(context.uri);
+        added++;
+        
+        // Estrai ID playlist per recuperare l'immagine di copertina
+        const plId = context.uri.split(':').pop();
+        const plInfo = await spotifyCall(`/playlists/${plId}`);
+        const imgUrl = plInfo?.images?.[0]?.url || '';
 
-      const imgUrl = track.album?.images?.[2]?.url || track.album?.images?.[1]?.url || '';
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'playlist-item';
-      itemDiv.innerHTML = `
-        <img class="playlist-img" src="${imgUrl}" alt="Cover">
-        <div class="playlist-info">
-          <span class="playlist-name">${track.name}</span>
-          <span class="playlist-tracks">${track.artists.map(a => a.name).join(', ')}</span>
-        </div>
-      `;
-      itemDiv.addEventListener('click', async () => {
-        await spotifyCall('/me/player/play', 'PUT', { uris: [track.uri] });
-        document.getElementById('playlist-overlay').classList.remove('show');
-        setTimeout(pollPlayback, 500);
-      });
-      container.appendChild(itemDiv);
-    });
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'playlist-item';
+        itemDiv.innerHTML = `
+          <img class="playlist-img" src="${imgUrl}" alt="Cover">
+          <div class="playlist-info">
+            <span class="playlist-name">${plInfo?.name || 'Playlist Recente'}</span>
+            <span class="playlist-tracks">Da ascolti recenti</span>
+          </div>
+        `;
+        itemDiv.addEventListener('click', async () => {
+          await spotifyCall('/me/player/play', 'PUT', { context_uri: context.uri });
+          document.getElementById('playlist-overlay').classList.remove('show');
+          setTimeout(pollPlayback, 500);
+        });
+        container.appendChild(itemDiv);
+      }
+    }
+    if (added === 0) {
+      const noneNotice = document.createElement('div');
+      noneNotice.style.fontSize = '11px';
+      noneNotice.style.color = 'var(--muted)';
+      noneNotice.style.padding = '4px 0 8px 4px';
+      noneNotice.textContent = 'Nessuna playlist recente rilevata.';
+      container.appendChild(noneNotice);
+    }
   }
 
-  // 2. Sezione Playlist
+  // 2. Le mie playlist preferite
   if (playlistsData && playlistsData.items && playlistsData.items.length > 0) {
     const plHeader = document.createElement('div');
     plHeader.style.fontSize = '12px';
     plHeader.style.fontWeight = '700';
     plHeader.style.color = 'var(--accent2)';
     plHeader.style.padding = '16px 0 8px 4px';
-    plHeader.textContent = 'Le Tue Playlist Preferite';
+    plHeader.textContent = 'Le Mie Playlist Preferite';
     container.appendChild(plHeader);
 
     playlistsData.items.forEach(pl => {
