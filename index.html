@@ -674,8 +674,8 @@ async function startSpotifyLogin() {
   saveClientId(clientId); const verifier = generateRandom(64);
   const challenge = base64urlencode(await sha256(verifier));
   try { sessionStorage.setItem('bw_verifier', verifier); } catch(e){}
-  const params = new URLSearchParams({ client_id:clientId, response_type:'code', redirect_uri:REDIRECT_URI, code_challenge_method:'S256', code_challenge:challenge, scope:SCOPES, show_dialog: 'true' });
-  location.href = `https://accounts.spotify.com/authorize?` + params.toString();
+  const params = new URLSearchParams({ client_id:clientId, response_type:'code', redirect_uri:REDIRECT_URI, code_challenge_method:'S256', code_challenge:challenge, scope:SCOPES });
+  location.href = 'https://accounts.spotify.com/authorize?' + params.toString();
 }
 
 async function exchangeCode(code) {
@@ -718,7 +718,7 @@ async function spotifyCall(path, method='GET', body=null) {
   const opts={method,headers:{Authorization:`Bearer ${token}`}};
   if (body) { opts.body=JSON.stringify(body); opts.headers['Content-Type']='application/json'; }
   try {
-    const res=await fetch(`https://api.spotify.com/v1${path}`,opts);
+    const res=await fetch(("https://api.spotify.com/v1" + path),opts);
     if (res.status===204) return {}; if (res.status===401) { spotifyToken=null; return null; }
     if (!res.ok) return null; return await res.json();
   } catch(e) { return null; }
@@ -818,6 +818,15 @@ async function loadRecents() {
     return row;
   }
 
+  // DEBUG: mostra un riepilogo di cosa ha restituito Spotify
+  const debugInfo = recentData.items.slice(0, 5).map(i =>
+    `${i?.track?.name || '?'} | ctx: ${i?.context?.type || 'nessuno'}`
+  ).join('<br>');
+  const debugDiv = document.createElement('div');
+  debugDiv.style.cssText = 'font-size:10px;color:#d4a843;padding:8px 12px;background:#1e1e2e;border-radius:8px;margin-bottom:8px;line-height:1.8;';
+  debugDiv.innerHTML = `<b>DEBUG (${recentData.items.length} item):</b><br>${debugInfo}`;
+  container.appendChild(debugDiv);
+
   // Raccoglie contesti unici (playlist/album) e brani singoli separatamente
   const seenUris   = new Set();
   const contexts   = [];   // {type, uri} — playlist o album
@@ -827,14 +836,12 @@ async function loadRecents() {
     if (!item || !item.track) continue;
 
     if (item.context && (item.context.type === 'playlist' || item.context.type === 'album')) {
-      // Contesto playlist o album: mostra il contenitore, non la singola traccia
       const uri = item.context.uri;
       if (!seenUris.has(uri)) {
         seenUris.add(uri);
         contexts.push({ type: item.context.type, uri });
       }
     } else {
-      // Brano singolo (ascoltato da ricerca, link diretto, ecc.)
       const uri = item.track.uri;
       if (!seenUris.has(uri)) {
         seenUris.add(uri);
@@ -842,6 +849,9 @@ async function loadRecents() {
       }
     }
   }
+
+  // DEBUG: mostra cosa è stato classificato
+  debugDiv.innerHTML += `<br><b>Contesti:</b> ${contexts.map(c=>c.type+'…'+c.uri.slice(-6)).join(', ')||'nessuno'}<br><b>Brani singoli:</b> ${soloTracks.length}`;
 
   // ── SEZIONE 1: Playlist e Album recenti ──
   if (contexts.length > 0) {
