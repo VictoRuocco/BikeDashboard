@@ -182,7 +182,7 @@ html,body {
 #spotify-dot { width:6px; height:6px; border-radius:50%; background:var(--muted); }
 #spotify-badge.linked #spotify-dot { background:var(--spotify); }
 
-/* ── PANNELLO DELLE PLAYLIST ── */
+/* ── PANNELLO DELLE PLAYLIST (Novità) ── */
 #playlist-overlay {
   display:none; position:fixed; inset:0; z-index:250; background:rgba(0,0,0,.8); backdrop-filter:blur(8px); align-items:center; justify-content:center;
 }
@@ -195,16 +195,10 @@ html,body {
 }
 #playlist-header h3 { font-size:15px; font-weight:600; color:var(--accent2); }
 #btn-playlist-close { background:none; border:none; color:var(--text2); font-size:20px; cursor:pointer; font-weight:300; }
-
 #playlist-list {
-  flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:16px;
+  flex:1; overflow-y:auto; padding:10px 16px; display:flex; flex-direction:column; gap:8px;
   -webkit-overflow-scrolling: touch;
 }
-.playlist-section-title {
-  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 4px;
-}
-.playlist-group { display: flex; flex-direction: column; gap: 8px; }
-
 .playlist-item {
   display:flex; align-items:center; gap:12px; background:var(--surf2); border:1px solid transparent; border-radius:12px; padding:8px 12px; cursor:pointer; transition:all 0.2s;
 }
@@ -402,7 +396,7 @@ html,body {
 <div id="playlist-overlay">
   <div id="playlist-card">
     <div id="playlist-header">
-      <h3>Scegli Musica</h3>
+      <h3>Le Tue Playlist Preferite</h3>
       <button id="btn-playlist-close" type="button">×</button>
     </div>
     <div id="playlist-list">
@@ -564,8 +558,7 @@ async function loadWeather() {
 loadWeather(); setInterval(loadWeather, 15 * 60 * 1000);
 
 /* ── SPOTIFY AUTH PACK (PKCE) ── */
-/* AGGIORNATO SCOPE CON 'user-read-recently-played' */
-const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative user-read-recently-played';
+const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
 let spotifyToken  = null; let spotifyExpiry = 0; let pollTimer     = null; let progressTimer = null;
 let currentProgress   = 0; let currentDuration   = 0; let currentlyPlaying  = false;
 const REDIRECT_URI = location.origin + location.pathname;
@@ -656,21 +649,15 @@ function startProgressTick() {
   progressTimer=setInterval(()=>{ if (currentlyPlaying && currentDuration>0) { currentProgress=Math.min(currentProgress+1000,currentDuration); updateProgress(currentProgress,currentDuration); } },1000);
 }
 
-function updateTrackUI(data, isFallback = false) {
+function updateTrackUI(data) {
   const statusEl=document.getElementById('media-status');
-  
-  if (!data || (!data.item && !data.track)) {
+  if (!data||!data.item) {
     document.getElementById('track-title').textContent='Nessuna traccia'; document.getElementById('track-artist').textContent='—';
     document.getElementById('ls-title').textContent='Nessuna traccia'; document.getElementById('ls-artist').textContent='—';
     statusEl.textContent='● Dispositivo in standby'; setPlayState(false); return;
   }
-
-  // Supporta sia l'endpoint live (data.item) sia la cronologia recente (data.track)
-  const item = data.item || data.track; 
-  const title=item.name||'—'; const artist=(item.artists||[]).map(a=>a.name).join(', ')||'—';
-  const img=item.album?.images?.[0]?.url||null; 
-  const prog=data.progress_ms||0; const dur=item.duration_ms||0; 
-  const play=isFallback ? false : (data.is_playing||false);
+  const item=data.item; const title=item.name||'—'; const artist=(item.artists||[]).map(a=>a.name).join(', ')||'—';
+  const img=item.album?.images?.[0]?.url||null; const prog=data.progress_ms||0; const dur=item.duration_ms||0; const play=data.is_playing||false;
 
   document.getElementById('track-title').textContent=title; document.getElementById('track-artist').textContent=artist;
   document.getElementById('ls-title').textContent=title; document.getElementById('ls-artist').textContent=artist;
@@ -679,147 +666,57 @@ function updateTrackUI(data, isFallback = false) {
 
   updateProgress(prog,dur); setPlayState(play);
   if (play) startProgressTick(); else clearInterval(progressTimer);
-  
-  if(isFallback) {
-    statusEl.textContent = '● Ultimo ascolto recuperato';
-  } else {
-    statusEl.textContent=play?'● Riproduzione attiva':'● In pausa';
-  }
+  statusEl.textContent=play?'● Riproduzione attiva':'● In pausa';
 }
 
-/* MODIFICATO: Se non c'è sessione attiva, recupera l'ultimo brano ascoltato */
-async function pollPlayback() { 
-  const data = await spotifyCall('/me/player'); 
-  if (data && Object.keys(data).length > 0) {
-    updateTrackUI(data); 
-  } else {
-    // Sessione vuota (204), proviamo ad agganciare l'ultima traccia ascoltata
-    const recentData = await spotifyCall('/me/player/recently-played?limit=1');
-    if (recentData && recentData.items && recentData.items.length > 0) {
-      updateTrackUI(recentData.items[0], true);
-    } else {
-      updateTrackUI(null);
-    }
-  }
-}
-
-function startPolling() { clearInterval(pollTimer); pollPlayback(); pollTimer=setInterval(pollPlayback,2000); }
+async function pollPlayback() { const data=await spotifyCall('/me/player'); if (data!==null) updateTrackUI(data); }
+function startPolling() { clearInterval(pollTimer); pollPlayback(); pollTimer=setInterval(pollPlayback,1500); }
 
 function onSpotifyLinked() {
   document.getElementById('spotify-badge').classList.add('linked');
   document.getElementById('spotify-label').textContent='Spotify ✓';
   document.getElementById('setup-overlay').classList.remove('show');
-  startPolling(); 
-  loadPlaylists();
+  startPolling(); loadPlaylists(); // Carica le playlist subito dopo l'autenticazione
 }
 
-/* ── LOGICA RECUPERO RECENTI + PLAYLIST PERSONALI (Aggiornato) ── */
+/* ── LOGICA RECUPERO E AVVIO PLAYLIST (Novità) ── */
 async function loadPlaylists() {
+  const data = await spotifyCall('/me/playlists?limit=20');
   const container = document.getElementById('playlist-list');
-  container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text2); font-size:13px;">Caricamento contenuti...</div>';
-
-  // Chiamate parallele per ottimizzare la velocità
-  const [recentTracksData, userPlaylistsData] = await Promise.all([
-    spotifyCall('/me/player/recently-played?limit=30'),
-    spotifyCall('/me/playlists?limit=20')
-  ]);
-
+  if (!data || !data.items || data.items.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted); font-size:12px;">Nessuna playlist trovata.</div>';
+    return;
+  }
   container.innerHTML = '';
-
-  // 1. SEZIONE ASCOLTATE DI RECENTE (Estraiamo i contesti di tipo playlist)
-  const recentPlaylists = [];
-  const seenUris = new Set();
-
-  if (recentTracksData && recentTracksData.items) {
-    for (const item of recentTracksData.items) {
-      if (item.context && item.context.type === 'playlist') {
-        if (!seenUris.has(item.context.uri)) {
-          seenUris.add(item.context.uri);
-          recentPlaylists.push(item.context);
-        }
-      }
-    }
-  }
-
-  if (recentPlaylists.length > 0) {
-    const title = document.createElement('div');
-    title.className = 'playlist-section-title';
-    title.textContent = 'Ascoltate di recente';
-    container.appendChild(title);
-
-    const group = document.createElement('div');
-    group.className = 'playlist-group';
-
-    // Per le playlist recenti otteniamo i dettagli minimi (Spotify restituisce solo l'URI nella history)
-    // Ne prendiamo un massimo di 6 per imitare la home del telefono
-    for (const pl of recentPlaylists.slice(0, 6)) {
-      const plId = pl.uri.split(':')[2];
-      // Chiamata asincrona leggera per recuperare nome e immagine della playlist specifica
-      const details = await spotifyCall(`/playlists/${plId}?fields=name,images,tracks.total`);
-      if (!details) continue;
-
-      const imgUrl = details.images?.[0]?.url || '';
-      const item = document.createElement('div');
-      item.className = 'playlist-item';
-      item.innerHTML = `
-        <img class="playlist-img" src="${imgUrl}" alt="Cover">
-        <div class="playlist-info">
-          <span class="playlist-name">${details.name}</span>
-          <span class="playlist-tracks">${details.tracks?.total || 0} brani</span>
-        </div>
-      `;
-      item.addEventListener('click', async () => {
-        await spotifyCall('/me/player/play', 'PUT', { context_uri: pl.uri });
-        document.getElementById('playlist-overlay').classList.remove('show');
-        setTimeout(pollPlayback, 500);
-      });
-      group.appendChild(item);
-    }
-    container.appendChild(group);
-  }
-
-  // 2. SEZIONE LE TUE PLAYLIST
-  if (userPlaylistsData && userPlaylistsData.items && userPlaylistsData.items.length > 0) {
-    const title = document.createElement('div');
-    title.className = 'playlist-section-title';
-    title.style.marginTop = '12px';
-    title.textContent = 'Le tue Playlist';
-    container.appendChild(title);
-
-    const group = document.createElement('div');
-    group.className = 'playlist-group';
-
-    userPlaylistsData.items.forEach(pl => {
-      if (!pl) return;
-      const imgUrl = pl.images?.[0]?.url || '';
-      const item = document.createElement('div');
-      item.className = 'playlist-item';
-      item.innerHTML = `
-        <img class="playlist-img" src="${imgUrl}" alt="Cover">
-        <div class="playlist-info">
-          <span class="playlist-name">${pl.name}</span>
-          <span class="playlist-tracks">${pl.tracks?.total || 0} brani</span>
-        </div>
-      `;
-      item.addEventListener('click', async () => {
-        await spotifyCall('/me/player/play', 'PUT', { context_uri: pl.uri });
-        document.getElementById('playlist-overlay').classList.remove('show');
-        setTimeout(pollPlayback, 500);
-      });
-      group.appendChild(item);
+  data.items.forEach(pl => {
+    if (!pl) return;
+    const imgUrl = pl.images?.[0]?.url || '';
+    const item = document.createElement('div');
+    item.className = 'playlist-item';
+    item.innerHTML = `
+      <img class="playlist-img" src="${imgUrl}" alt="Cover">
+      <div class="playlist-info">
+        <span class="playlist-name">${pl.name}</span>
+        <span class="playlist-tracks">${pl.tracks?.total || 0} brani</span>
+      </div>
+    `;
+    item.addEventListener('click', async () => {
+      // Invia il comando a Spotify per riprodurre il contesto della playlist selezionata
+      await spotifyCall('/me/player/play', 'PUT', { context_uri: pl.uri });
+      document.getElementById('playlist-overlay').classList.remove('show');
+      setTimeout(pollPlayback, 500);
     });
-    container.appendChild(group);
-  }
-
-  if (container.children.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted); font-size:12px;">Nessun contenuto trovato.</div>';
-  }
+    container.appendChild(item);
+  });
 }
 
 /* ── INTERFACCE, COMPORTAMENTI E BOTTONI ── */
 document.getElementById('play-btn').addEventListener('click', async () => {
-  const act=currentlyPlaying?'/me/player/pause':'/me/player/play';
-  await spotifyCall(act,'PUT'); setPlayState(!currentlyPlaying); setTimeout(pollPlayback,400);
+  const act = currentlyPlaying ? '/me/player/pause' : '/me/player/play';
+  // Inviamo un oggetto vuoto {} per far sì che Spotify riprenda la riproduzione dal punto esatto
+  await spotifyCall(act, 'PUT', currentlyPlaying ? null : {}); 
+  setPlayState(!currentlyPlaying); 
+  setTimeout(pollPlayback, 400);
 });
 document.getElementById('btn-prev').addEventListener('click', async () => { await spotifyCall('/me/player/previous','POST'); setTimeout(pollPlayback,500); });
 document.getElementById('btn-next').addEventListener('click', async () => { await spotifyCall('/me/player/next','POST'); setTimeout(pollPlayback,500); });
