@@ -786,7 +786,12 @@ async function loadRecents() {
   const recentData = await spotifyCall('/me/player/recently-played?limit=50');
   container.innerHTML = '';
 
-  if (!recentData || !recentData.items || recentData.items.length === 0) {
+  // Debug: mostra cosa ha restituito la chiamata
+  if (!recentData) {
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:#f87171; font-size:13px;">Errore: chiamata recently-played fallita (token scaduto o scope mancante).<br><br>Tocca il badge Spotify in alto a destra e ri-effettua il login.</div>';
+    return;
+  }
+  if (!recentData.items || recentData.items.length === 0) {
     container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Nessun ascolto recente trovato.</div>';
     return;
   }
