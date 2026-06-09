@@ -674,7 +674,7 @@ async function startSpotifyLogin() {
   saveClientId(clientId); const verifier = generateRandom(64);
   const challenge = base64urlencode(await sha256(verifier));
   try { sessionStorage.setItem('bw_verifier', verifier); } catch(e){}
-  const params = new URLSearchParams({ client_id:clientId, response_type:'code', redirect_uri:REDIRECT_URI, code_challenge_method:'S256', code_challenge:challenge, scope:SCOPES });
+  const params = new URLSearchParams({ client_id:clientId, response_type:'code', redirect_uri:REDIRECT_URI, code_challenge_method:'S256', code_challenge:challenge, scope:SCOPES, show_dialog: 'true' });
   location.href = `https://accounts.spotify.com/authorize?` + params.toString();
 }
 
