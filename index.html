@@ -783,7 +783,6 @@ async function loadRecents() {
   const container = document.getElementById('playlist-list');
   container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Caricamento contenuti...</div>';
 
-  // Carica recenti e playlist personali in parallelo
   const [initialRecentData, playlistData] = await Promise.all([
     spotifyCall('/me/player/recently-played?limit=50'),
     spotifyCall('/me/playlists?limit=50')
@@ -791,7 +790,6 @@ async function loadRecents() {
 
   container.innerHTML = '';
 
-  // Helper: crea una riga elemento
   function makeItem(imgUrl, name, sub, onClickFn) {
     const itemDiv = document.createElement('div');
     itemDiv.className = 'playlist-item';
@@ -810,7 +808,6 @@ async function loadRecents() {
     return itemDiv;
   }
 
-  // ── SEZIONE 1: Ascolti Recenti ──
   if (initialRecentData && initialRecentData.items && initialRecentData.items.length > 0) {
     const title1 = document.createElement('div');
     title1.className = 'playlist-section-title';
@@ -818,37 +815,33 @@ async function loadRecents() {
     container.appendChild(title1);
 
     const toResolve = []; 
-    const seenUris = new Set();
+    let lastUri = null;
 
     function processItems(items) {
       for (const item of items) {
         if (!item || !item.track) continue;
         
-        let uri;
-        let entryData;
-
         if (item.context && (item.context.type === 'playlist' || item.context.type === 'album')) {
-          uri = item.context.uri;
-          entryData = { type: item.context.type, id: uri.split(':')[2], uri };
+          const uri = item.context.uri;
+          if (uri !== lastUri) {
+            lastUri = uri;
+            toResolve.push({ type: item.context.type, id: uri.split(':')[2], uri });
+          }
         } else {
-          uri = item.track.uri;
-          entryData = { type: 'track', uri, trackData: item.track };
-        }
-
-        if (!seenUris.has(uri)) {
-          seenUris.add(uri);
-          toResolve.push(entryData);
+          const uri = item.track.uri;
+          if (uri !== lastUri) {
+            lastUri = uri;
+            toResolve.push({ type: 'track', uri, trackData: item.track });
+          }
         }
       }
     }
 
-    // Processiamo la prima pagina
     processItems(initialRecentData.items);
 
-    // Paginazione: se abbiamo meno di 10 contesti/brani distinti, andiamo a ritroso nella storia
     let currentRecentData = initialRecentData;
     let pagesFetched = 1;
-    while (toResolve.length < 10 && currentRecentData.cursors && currentRecentData.cursors.before && pagesFetched < 4) {
+    while (toResolve.length < 8 && currentRecentData.cursors && currentRecentData.cursors.before && pagesFetched < 4) {
       const before = currentRecentData.cursors.before;
       const nextRecentData = await spotifyCall(`/me/player/recently-played?limit=50&before=${before}`);
       if (!nextRecentData || !nextRecentData.items || nextRecentData.items.length === 0) {
