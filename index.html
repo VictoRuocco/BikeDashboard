@@ -823,22 +823,33 @@ async function loadRecents() {
     container.appendChild(title1);
 
     const toResolve = []; 
-    let lastUri = null;
+    const seenUris = new Set();
 
     function processItems(items) {
       for (const item of items) {
         if (!item || !item.track) continue;
         
+        let uri = null;
+        let type = null;
+
         if (item.context && (item.context.type === 'playlist' || item.context.type === 'album')) {
-          const uri = item.context.uri;
-          if (uri !== lastUri) {
-            lastUri = uri;
-            toResolve.push({ type: item.context.type, id: uri.split(':')[2], uri });
-          }
+          uri = item.context.uri;
+          type = item.context.type;
+        } else if (item.track.album && item.track.album.uri) {
+          uri = item.track.album.uri;
+          type = 'album';
         } else {
-          const uri = item.track.uri;
-          if (uri !== lastUri) {
-            lastUri = uri;
+          uri = item.track.uri;
+          type = 'track';
+        }
+
+        if (uri && !seenUris.has(uri)) {
+          seenUris.add(uri);
+          if (type === 'playlist') {
+            toResolve.push({ type: 'playlist', id: uri.split(':')[2], uri });
+          } else if (type === 'album') {
+            toResolve.push({ type: 'album', id: uri.split(':')[2], uri });
+          } else {
             toResolve.push({ type: 'track', uri, trackData: item.track });
           }
         }
