@@ -446,7 +446,7 @@ html,body {
 <div id="playlist-overlay">
   <div id="playlist-card">
     <div id="playlist-header">
-      <h3>Scegli Musica</h3>
+      <h3>Ascolti Recenti</h3>
       <button id="btn-playlist-close" type="button">×</button>
     </div>
     <div id="playlist-list">
@@ -675,7 +675,7 @@ async function startSpotifyLogin() {
   const challenge = base64urlencode(await sha256(verifier));
   try { sessionStorage.setItem('bw_verifier', verifier); } catch(e){}
   const params = new URLSearchParams({ client_id:clientId, response_type:'code', redirect_uri:REDIRECT_URI, code_challenge_method:'S256', code_challenge:challenge, scope:SCOPES });
-  location.href = 'https://accounts.spotify.com/authorize?' + params.toString();
+  location.href = `https://accounts.spotify.com/authorize?` + params.toString();
 }
 
 async function exchangeCode(code) {
@@ -718,7 +718,7 @@ async function spotifyCall(path, method='GET', body=null) {
   const opts={method,headers:{Authorization:`Bearer ${token}`}};
   if (body) { opts.body=JSON.stringify(body); opts.headers['Content-Type']='application/json'; }
   try {
-    const res=await fetch(("https://api.spotify.com/v1" + path),opts);
+    const res=await fetch(`https://api.spotify.com/v1${path}`,opts);
     if (res.status===204) return {}; if (res.status===401) { spotifyToken=null; return null; }
     if (!res.ok) return null; return await res.json();
   } catch(e) { return null; }
@@ -783,121 +783,123 @@ async function loadRecents() {
   const container = document.getElementById('playlist-list');
   container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Caricamento contenuti...</div>';
 
-  const recentData = await spotifyCall('/me/player/recently-played?limit=50');
+  // Carica recenti e playlist personali in parallelo
+  const [recentData, playlistData] = await Promise.all([
+    spotifyCall('/me/player/recently-played?limit=50'),
+    spotifyCall('/me/playlists?limit=50')
+  ]);
+
   container.innerHTML = '';
 
-  // Debug: mostra cosa ha restituito la chiamata
-  if (!recentData) {
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:#f87171; font-size:13px;">Errore: chiamata recently-played fallita (token scaduto o scope mancante).<br><br>Tocca il badge Spotify in alto a destra e ri-effettua il login.</div>';
-    return;
-  }
-  if (!recentData.items || recentData.items.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Nessun ascolto recente trovato.</div>';
-    return;
-  }
-
-  // Helper: crea e aggiunge una riga al container
-  function makeRow(imgUrl, name, sub, playFn) {
-    const row = document.createElement('div');
-    row.className = 'playlist-item';
-    const img = document.createElement('img');
-    img.className = 'playlist-img';
-    img.src = imgUrl || '';
-    img.alt = '';
-    img.onerror = () => { img.style.opacity = '0.3'; };
-    const info = document.createElement('div');
-    info.className = 'playlist-info';
-    info.innerHTML = `<span class="playlist-name">${name}</span><span class="playlist-tracks">${sub}</span>`;
-    row.appendChild(img);
-    row.appendChild(info);
-    row.addEventListener('click', async () => {
-      await playFn();
+  // Helper: crea una riga elemento
+  function makeItem(imgUrl, name, sub, onClickFn) {
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'playlist-item';
+    itemDiv.innerHTML = `
+      <img class="playlist-img" src="${imgUrl}" alt="" onerror="this.style.opacity='0.3'">
+      <div class="playlist-info">
+        <span class="playlist-name">${name}</span>
+        <span class="playlist-tracks">${sub}</span>
+      </div>
+    `;
+    itemDiv.addEventListener('click', async () => {
+      await onClickFn();
       document.getElementById('playlist-overlay').classList.remove('show');
       setTimeout(pollPlayback, 500);
     });
-    return row;
+    return itemDiv;
   }
 
-  // DEBUG: mostra un riepilogo di cosa ha restituito Spotify
-  const debugInfo = recentData.items.slice(0, 5).map(i =>
-    `${i?.track?.name || '?'} | ctx: ${i?.context?.type || 'nessuno'}`
-  ).join('<br>');
-  const debugDiv = document.createElement('div');
-  debugDiv.style.cssText = 'font-size:10px;color:#d4a843;padding:8px 12px;background:#1e1e2e;border-radius:8px;margin-bottom:8px;line-height:1.8;';
-  debugDiv.innerHTML = `<b>DEBUG (${recentData.items.length} item):</b><br>${debugInfo}`;
-  container.appendChild(debugDiv);
+  // ── SEZIONE 1: Ascolti Recenti ──
+  if (recentData && recentData.items && recentData.items.length > 0) {
 
-  // Raccoglie contesti unici (playlist/album) e brani singoli separatamente
-  const seenUris   = new Set();
-  const contexts   = [];   // {type, uri} — playlist o album
-  const soloTracks = [];   // tracce senza contesto playlist/album
+    // Deduplication: un solo elemento per URI contesto (o traccia se senza contesto)
+    const seenUris = new Set();
+    const toResolve = []; // { type: 'playlist'|'album'|'track', id, trackData }
 
-  for (const item of recentData.items) {
-    if (!item || !item.track) continue;
-
-    if (item.context && (item.context.type === 'playlist' || item.context.type === 'album')) {
-      const uri = item.context.uri;
-      if (!seenUris.has(uri)) {
-        seenUris.add(uri);
-        contexts.push({ type: item.context.type, uri });
+    for (const item of recentData.items) {
+      if (!item || !item.track) continue;
+      if (item.context && (item.context.type === 'playlist' || item.context.type === 'album')) {
+        const uri = item.context.uri;
+        if (!seenUris.has(uri)) {
+          seenUris.add(uri);
+          toResolve.push({ type: item.context.type, id: uri.split(':')[2], uri });
+        }
+      } else {
+        // Brano singolo — i dati sono già nell'item, nessuna chiamata extra
+        const uri = item.track.uri;
+        if (!seenUris.has(uri)) {
+          seenUris.add(uri);
+          toResolve.push({ type: 'track', uri, trackData: item.track });
+        }
       }
-    } else {
-      const uri = item.track.uri;
-      if (!seenUris.has(uri)) {
-        seenUris.add(uri);
-        soloTracks.push(item.track);
+    }
+
+    // Recupera dettagli di playlist e album tutti in parallelo
+    const resolved = await Promise.all(toResolve.map(async entry => {
+      if (entry.type === 'track') return entry; // già completo
+      if (entry.type === 'playlist') {
+        const d = await spotifyCall(`/playlists/${entry.id}?fields=name,images,tracks.total,uri`);
+        return d ? { ...entry, detail: d } : null;
+      }
+      if (entry.type === 'album') {
+        const d = await spotifyCall(`/albums/${entry.id}`);
+        return d ? { ...entry, detail: d } : null;
+      }
+      return null;
+    }));
+
+    const validItems = resolved.filter(Boolean);
+
+    if (validItems.length > 0) {
+      const title1 = document.createElement('div');
+      title1.className = 'playlist-section-title';
+      title1.textContent = 'Ascolti Recenti';
+      container.appendChild(title1);
+
+      for (const entry of validItems) {
+        if (entry.type === 'playlist') {
+          const d = entry.detail;
+          const imgUrl = d.images?.[0]?.url || '';
+          const sub = `Playlist · ${d.tracks?.total ?? 0} brani`;
+          container.appendChild(makeItem(imgUrl, d.name || 'Playlist', sub, () =>
+            spotifyCall('/me/player/play', 'PUT', { context_uri: entry.uri })
+          ));
+        } else if (entry.type === 'album') {
+          const d = entry.detail;
+          const imgUrl = d.images?.[0]?.url || '';
+          const artists = (d.artists || []).map(a => a.name).join(', ');
+          const sub = `Album · ${artists}`;
+          container.appendChild(makeItem(imgUrl, d.name || 'Album', sub, () =>
+            spotifyCall('/me/player/play', 'PUT', { context_uri: entry.uri })
+          ));
+        } else if (entry.type === 'track') {
+          const t = entry.trackData;
+          const imgUrl = t.album?.images?.[0]?.url || '';
+          const artists = (t.artists || []).map(a => a.name).join(', ');
+          const sub = `Brano · ${artists}`;
+          container.appendChild(makeItem(imgUrl, t.name || 'Brano', sub, () =>
+            spotifyCall('/me/player/play', 'PUT', { uris: [entry.uri] })
+          ));
+        }
       }
     }
   }
 
-  // DEBUG: mostra cosa è stato classificato
-  debugDiv.innerHTML += `<br><b>Contesti:</b> ${contexts.map(c=>c.type+'…'+c.uri.slice(-6)).join(', ')||'nessuno'}<br><b>Brani singoli:</b> ${soloTracks.length}`;
+  // ── SEZIONE 2: Le tue Playlist ──
+  if (playlistData && playlistData.items && playlistData.items.length > 0) {
+    const title2 = document.createElement('div');
+    title2.className = 'playlist-section-title';
+    title2.style.marginTop = container.children.length > 0 ? '14px' : '0';
+    title2.textContent = 'Le tue Playlist';
+    container.appendChild(title2);
 
-  // ── SEZIONE 1: Playlist e Album recenti ──
-  if (contexts.length > 0) {
-    const sec = document.createElement('div');
-    sec.className = 'playlist-section-title';
-    sec.textContent = 'Ascoltati di recente';
-    container.appendChild(sec);
-
-    for (const ctx of contexts) {
-      const id = ctx.uri.split(':')[2];
-
-      if (ctx.type === 'playlist') {
-        const d = await spotifyCall(`/playlists/${id}?fields=name,images,tracks.total,uri`);
-        if (!d) continue;
-        const imgUrl = d.images?.[0]?.url || '';
-        const sub    = `Playlist · ${d.tracks?.total ?? 0} brani`;
-        container.appendChild(makeRow(imgUrl, d.name || 'Playlist', sub, () =>
-          spotifyCall('/me/player/play', 'PUT', { context_uri: ctx.uri })
-        ));
-
-      } else if (ctx.type === 'album') {
-        const d = await spotifyCall(`/albums/${id}`);
-        if (!d) continue;
-        const imgUrl  = d.images?.[0]?.url || '';
-        const artists = (d.artists || []).map(a => a.name).join(', ');
-        const sub     = `Album · ${artists}`;
-        container.appendChild(makeRow(imgUrl, d.name || 'Album', sub, () =>
-          spotifyCall('/me/player/play', 'PUT', { context_uri: ctx.uri })
-        ));
-      }
-    }
-  }
-
-  // ── SEZIONE 2: Brani singoli recenti ──
-  if (soloTracks.length > 0) {
-    const sec = document.createElement('div');
-    sec.className = 'playlist-section-title';
-    if (contexts.length > 0) sec.style.marginTop = '14px';
-    sec.textContent = 'Brani recenti';
-    container.appendChild(sec);
-
-    for (const track of soloTracks.slice(0, 15)) {
-      const imgUrl  = track.album?.images?.[0]?.url || '';
-      const artists = (track.artists || []).map(a => a.name).join(', ');
-      container.appendChild(makeRow(imgUrl, track.name || 'Brano', artists, () =>
-        spotifyCall('/me/player/play', 'PUT', { uris: [track.uri] })
+    for (const item of playlistData.items) {
+      if (!item) continue;
+      const imgUrl = item.images?.[0]?.url || '';
+      const sub = `${item.tracks?.total || 0} brani`;
+      container.appendChild(makeItem(imgUrl, item.name || 'Playlist', sub, () =>
+        spotifyCall('/me/player/play', 'PUT', { context_uri: item.uri })
       ));
     }
   }
