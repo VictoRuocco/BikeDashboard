@@ -818,35 +818,41 @@ async function loadRecents() {
     container.appendChild(title1);
 
     const toResolve = []; 
-    let lastUri = null;
+    const seenUris = new Set();
 
     for (const item of recentData.items) {
       if (!item || !item.track) continue;
       
+      let uri;
+      let entryData;
+
       if (item.context && (item.context.type === 'playlist' || item.context.type === 'album')) {
-        const uri = item.context.uri;
-        if (uri !== lastUri) {
-          lastUri = uri;
-          toResolve.push({ type: item.context.type, id: uri.split(':')[2], uri });
-        }
+        uri = item.context.uri;
+        entryData = { type: item.context.type, id: uri.split(':')[2], uri };
       } else {
-        const uri = item.track.uri;
-        if (uri !== lastUri) {
-          lastUri = uri;
-          toResolve.push({ type: 'track', uri, trackData: item.track });
-        }
+        uri = item.track.uri;
+        entryData = { type: 'track', uri, trackData: item.track };
+      }
+
+      if (!seenUris.has(uri)) {
+        seenUris.add(uri);
+        toResolve.push(entryData);
       }
     }
 
     const resolved = await Promise.all(toResolve.map(async entry => {
       if (entry.type === 'track') return entry;
       if (entry.type === 'playlist') {
-        const d = await spotifyCall(`/playlists/${entry.id}?fields=name,images,tracks.total,uri`);
-        return d ? { ...entry, detail: d } : null;
+        try {
+            const d = await spotifyCall(`/playlists/${entry.id}?fields=name,images,tracks.total,uri`);
+            return d ? { ...entry, detail: d } : null;
+        } catch(e) { return null; }
       }
       if (entry.type === 'album') {
-        const d = await spotifyCall(`/albums/${entry.id}`);
-        return d ? { ...entry, detail: d } : null;
+        try {
+            const d = await spotifyCall(`/albums/${entry.id}`);
+            return d ? { ...entry, detail: d } : null;
+        } catch(e) { return null; }
       }
       return null;
     }));
