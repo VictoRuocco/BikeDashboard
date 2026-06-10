@@ -671,10 +671,18 @@ function generateRandom(len=64) { const arr=new Uint8Array(len); crypto.getRando
 async function startSpotifyLogin() {
   const clientId = document.getElementById('client-id-input').value.trim();
   if (!clientId) { alert('Client ID richiesto!'); return; }
-  saveClientId(clientId); const verifier = generateRandom(64);
+  saveClientId(clientId);
+  
+  // Svuota i vecchi token salvati per forzare una nuova autenticazione pulita
+  try {
+    localStorage.removeItem('bw_refresh');
+    localStorage.removeItem('bw_expiry');
+  } catch(e) {}
+
+  const verifier = generateRandom(64);
   const challenge = base64urlencode(await sha256(verifier));
   try { sessionStorage.setItem('bw_verifier', verifier); } catch(e){}
-  const params = new URLSearchParams({ client_id:clientId, response_type:'code', redirect_uri:REDIRECT_URI, code_challenge_method:'S256', code_challenge:challenge, scope:SCOPES });
+  const params = new URLSearchParams({ client_id:clientId, response_type:'code', redirect_uri:REDIRECT_URI, code_challenge_method:'S256', code_challenge:challenge, scope:SCOPES, show_dialog: 'true' });
   location.href = `https://accounts.spotify.com/authorize?` + params.toString();
 }
 
