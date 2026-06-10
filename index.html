@@ -816,13 +816,14 @@ async function loadRecents() {
     // Deduplication: un solo elemento per URI contesto (o traccia se senza contesto)
     const seenUris = new Set();
     const toResolve = []; // { type: 'playlist'|'album'|'track', id, trackData }
+    let lastContextUri = null;
 
     for (const item of recentData.items) {
       if (!item || !item.track) continue;
       if (item.context && (item.context.type === 'playlist' || item.context.type === 'album')) {
         const uri = item.context.uri;
-        if (!seenUris.has(uri)) {
-          seenUris.add(uri);
+        if (uri !== lastContextUri) {
+          lastContextUri = uri;
           toResolve.push({ type: item.context.type, id: uri.split(':')[2], uri });
         }
       } else {
