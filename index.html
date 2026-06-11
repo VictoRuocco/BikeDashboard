@@ -450,7 +450,7 @@ html,body {
       <button id="btn-playlist-close" type="button">×</button>
     </div>
     <div id="playlist-list">
-      <div style="text-align:center; padding:40px; color:var(--text2); font-size:13px;">Caricamento contenuti...</div>
+      <div style="text-align:center; padding:40px; color:var(--text2); font-size:13px;">Caricamento Contenuti...</div>
     </div>
   </div>
 </div>
@@ -542,7 +542,7 @@ async function initBattery() {
       document.getElementById('bat-txt').textContent = `${pct}%`;
       document.getElementById('bat-level').style.width = `${pct}%`;
       
-      // Specchio su lockscreen
+      // Specchio Lockscreen
       document.getElementById('ls-bat-txt').textContent = `${pct}%`;
       document.getElementById('ls-bat-level').style.width = `${pct}%`;
 
@@ -636,7 +636,7 @@ async function loadWeather() {
       document.getElementById('hr1-pop').textContent = `${pop1h}%`;
       document.getElementById('hr1-pop').className = pop1h > 20 ? "hr-pop rainy" : "hr-pop";
       
-      // Specchio su lockscreen
+      // Specchio Lockscreen
       document.getElementById('ls-hr1-icon').innerHTML = SVG_ICONS[WX_MAPPING[code1h] || 'clear'];
       document.getElementById('ls-hr1-pop').textContent = `${pop1h}%`;
       document.getElementById('ls-hr1-pop').className = pop1h > 20 ? "ls-hr-pop rainy" : "ls-hr-pop";
@@ -647,7 +647,7 @@ async function loadWeather() {
       document.getElementById('hr2-pop').textContent = `${pop2h}%`;
       document.getElementById('hr2-pop').className = pop2h > 20 ? "hr-pop rainy" : "hr-pop";
       
-      // Specchio su lockscreen
+      // Specchio Lockscreen
       document.getElementById('ls-hr2-icon').innerHTML = SVG_ICONS[WX_MAPPING[code2h] || 'clear'];
       document.getElementById('ls-hr2-pop').textContent = `${pop2h}%`;
       document.getElementById('ls-hr2-pop').className = pop2h > 20 ? "ls-hr-pop rainy" : "ls-hr-pop";
@@ -673,7 +673,6 @@ async function startSpotifyLogin() {
   if (!clientId) { alert('Client ID richiesto!'); return; }
   saveClientId(clientId);
   
-  // Svuota i vecchi token salvati per forzare una nuova autenticazione pulita
   try {
     localStorage.removeItem('bw_refresh');
     localStorage.removeItem('bw_expiry');
@@ -789,7 +788,7 @@ function onSpotifyLinked() {
 /* ── CRONOLOGIA RECENTE E PLAYLIST SALVATE ── */
 async function loadRecents() {
   const container = document.getElementById('playlist-list');
-  container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Caricamento contenuti...</div>';
+  container.innerHTML = '<div style="text-align:center; padding:40px; color:#b3b3b3; font-size:14px; grid-column:1/-1;">Caricamento Contenuti...</div>';
 
   const [initialRecentData, playlistData] = await Promise.all([
     spotifyCall('/me/player/recently-played?limit=50'),
