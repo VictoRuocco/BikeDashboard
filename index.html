@@ -362,7 +362,7 @@ html,body {
         
         <button id="awake-btn" type="button">
           <span id="awake-dot"></span>
-          <span id="awake-text">Schermo Attivo</span>
+          <span id="awake-text">Attiva Schermo</span>
         </button>
       </div>
 
@@ -431,7 +431,7 @@ html,body {
           </button>
         </div>
 
-        <div id="media-status">Connetti Spotify per iniziare</div>
+        <div id="media-status">Connetti Spotify</div>
       </div>
 
       <div id="spotify-badge">
@@ -606,8 +606,8 @@ async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) { awakeText.textContent='Non supp.'; return; }
   try {
     wakeLock = await navigator.wakeLock.request('screen');
-    awakeBtn.classList.add('on'); awakeText.textContent='Schermo ON';
-    wakeLock.addEventListener('release', () => { wakeLock=null; awakeBtn.classList.remove('on'); awakeText.textContent='Schermo Attivo'; });
+    awakeBtn.classList.add('on'); awakeText.textContent='Schermo Attivo';
+    wakeLock.addEventListener('release', () => { wakeLock=null; awakeBtn.classList.remove('on'); awakeText.textContent='Attiva Schermo'; });
   } catch(e) { awakeText.textContent='Errore'; }
 }
 async function releaseWakeLock() { if (wakeLock) await wakeLock.release(); }
@@ -615,7 +615,7 @@ awakeBtn.addEventListener('click', () => wakeLock ? releaseWakeLock() : acquireW
 
 /* ── METEO ENGINE ── */
 async function loadWeather() {
-  if (!navigator.geolocation) { document.getElementById('wx-desc').textContent = 'GPS non supp.'; return; }
+  if (!navigator.geolocation) { document.getElementById('wx-desc').textContent = 'GPS Non Supportato'; return; }
   navigator.geolocation.getCurrentPosition(async pos => {
     const { latitude: lat, longitude: lon } = pos.coords;
     try {
