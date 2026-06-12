@@ -1,4 +1,4 @@
-const CACHE = 'BikeDashboard';
+const CACHE = 'Bike Dashboard';
 const ASSETS = [
   './',
   './index.html',

@@ -1,7 +1,7 @@
 {
-  "name": "BikeDashboard",
-  "short_name": "BikeDashboard",
-  "description": "BikeDashboard, per visualizzare orologio, meteo e player musicale su smartphone mentre si va in bici!",
+  "name": "Bike Dashboard",
+  "short_name": "Bike Dashboard",
+  "description": "Bike Dashboard, per visualizzare orologio, meteo e player musicale su smartphone mentre si va in bici!",
   "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "landscape",
