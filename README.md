@@ -1,1 +1,1 @@
-BikeWidget, per visualizzare orologio, meteo e player musicale su smartphone mentre si va in bici!
+BikeDashboard, per visualizzare orologio, meteo e player musicale su smartphone mentre si va in bici!
